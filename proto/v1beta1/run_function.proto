@@ -19,6 +19,9 @@ syntax = "proto3";
 import "google/protobuf/struct.proto";
 import "google/protobuf/duration.proto";
 
+// Note that the authoritative Composition Functions protobuf definition lives
+// at the below URL. Each SDK maintains and manually syncs its own copy.
+// https://github.com/crossplane/crossplane/tree/master/apis/apiextensions/fn/proto
 package proto.v1beta1;
 
 option go_package = "github.com/crossplane/function-sdk-go/proto/v1beta1";
