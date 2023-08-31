@@ -1,0 +1,104 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "helpers:pinGitHubActionDigests"
+  ],
+// We only want renovate to rebase PRs when they have conflicts,
+// default "auto" mode is not required.
+  "rebaseWhen": "conflicted",
+// The maximum number of PRs to be created in parallel
+  "prConcurrentLimit": 5,
+  "postUpdateOptions": ["gomodTidy"],
+// By default renovate will auto detect whether semantic commits have been used
+// in the recent history and comply with that, we explicitly disable it
+  "semanticCommits": "disabled",
+// All PRs should have a label
+  "labels": ["automated"],
+  "regexManagers": [
+    {
+      "description": "Bump Go version ued in workflows",
+      "fileMatch": ["^\\.github\\/workflows\\/[^/]+\\.ya?ml$"],
+      "matchStrings": [
+        "GO_VERSION: '(?<currentValue>.*?)'\\n"
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang"
+    }, {
+      "description": "Bump golangci-lint version in workflows and the Makefile",
+      "fileMatch": ["^\\.github\\/workflows\\/[^/]+\\.ya?ml$","^Makefile$"],
+      "matchStrings": [
+        "GOLANGCI_VERSION: 'v(?<currentValue>.*?)'\\n",
+        "GOLANGCILINT_VERSION = (?<currentValue>.*?)\\n"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "golangci/golangci-lint",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }, {
+      "description": "Bump Go required version in workflows and the Makefile",
+      "fileMatch": ["^\\.github\\/workflows\\/[^/]+\\.ya?ml$", "^Makefile$"],
+      "matchStrings": [
+        "GO_REQUIRED_VERSION = (?<currentValue>.*?)\\n",
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang",
+      "versioningTemplate": "loose",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+)"
+    }
+  ],
+// PackageRules disabled below should be enabled in case of vulnerabilities
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Only get docker image updates every 2 weeks to reduce noise",
+      "matchDatasources": ["docker"],
+      "schedule": ["every 2 week on monday"],
+      "enabled": true,
+    }, {
+      "description": "Ignore k8s.io/client-go older versions, they switched to semantic version and old tags are still available in the repo",
+      "matchDatasources": [
+        "go"
+      ],
+      "matchDepNames": [
+        "k8s.io/client-go"
+      ],
+      "allowedVersions": "<1.0"
+    }, {
+      "description": "Only get dependency digest updates every month to reduce noise",
+      "matchDatasources": [
+        "go"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+      ],
+      "extends": ["schedule:monthly"],
+    }, {
+      "description": "Single PR for all kubernetes dependency updates, as they usually are all linked",
+      "matchDatasources": [
+        "go"
+      ],
+      "groupName": "kubernetes deps",
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "matchPackagePrefixes": [
+        "k8s.io",
+        "sigs.k8s.io"
+      ]
+    }, {
+      "description": "Ignore oss-fuzz, it's not using tags, we'll stick to master",
+      "matchDepTypes": [
+        "action"
+      ],
+      "matchDepNames": [
+        "google/oss-fuzz"
+      ],
+      "enabled": false
+    }
+  ]
+}
