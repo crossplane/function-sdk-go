@@ -19,6 +19,10 @@
 // - protoc             (unknown)
 // source: v1beta1/run_function.proto
 
+// Note that the authoritative Composition Functions protobuf definition lives
+// at the below URL. Each SDK maintains and manually syncs its own copy.
+// https://github.com/crossplane/crossplane/tree/master/apis/apiextensions/fn/proto
+
 package v1beta1
 
 import (
