@@ -24,7 +24,7 @@ import "google/protobuf/duration.proto";
 // https://github.com/crossplane/crossplane/tree/master/apis/apiextensions/fn/proto
 package apiextensions.fn.proto.v1beta1;
 
-option go_package = "github.com/crossplane/function-runtime-go/proto/v1beta1";
+option go_package = "github.com/crossplane/function-sdk-go/proto/v1beta1";
 
 // A FunctionRunnerService is a Composition Function.
 service FunctionRunnerService {
