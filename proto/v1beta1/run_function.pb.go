@@ -167,9 +167,8 @@ type RunFunctionRequest struct {
 	// of the time each Function was invoked.
 	Observed *State `protobuf:"bytes,2,opt,name=observed,proto3" json:"observed,omitempty"`
 	// Desired state according to a Function pipeline. The state passed to a
-	// particular Function may have been accumulated by processing a Composition's
-	// patch-and-transform resources array. It may also have been accumulated by
-	// previous Functions in the pipeline.
+	// particular Function may have been accumulated by previous Functions in the
+	// pipeline.
 	Desired *State `protobuf:"bytes,3,opt,name=desired,proto3" json:"desired,omitempty"`
 	// Optional input specific to this Function invocation. A JSON representation
 	// of the 'input' block of the relevant entry in a Composition's pipeline.
@@ -475,13 +474,27 @@ func (x *State) GetResources() map[string]*Resource {
 	return nil
 }
 
-// A Resource represents the state of a resource.
+// A Resource represents the state of a composite or composed resource.
 type Resource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// The JSON representation of the resource.
+	//
+	//   - Crossplane will set this field in a RunFunctionRequest to the entire
+	//     observed state of a resource - including its metadata, spec, and status.
+	//
+	//   - A Function should set this field in a RunFunctionRequest to communicate
+	//     the desired state of a composite or composed resource.
+	//
+	//   - A Function may only specify the desired status of a composite resource -
+	//     not its metadata or spec. A Function should not return desired metadata
+	//     or spec for a composite resource. This will be ignored.
+	//
+	//   - A Function may not specify the desired status of a composed resource -
+	//     only its metadata and spec. A Function should not return desired status
+	//     for a composed resource. This will be ignored.
 	Resource *structpb.Struct `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The resource's connection details.
 	//
