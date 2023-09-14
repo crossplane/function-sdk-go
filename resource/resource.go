@@ -1,0 +1,144 @@
+/*
+Copyright 2021 The Crossplane Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Package resource contains utilities to convert protobuf representations of
+// Crossplane resources to unstructured Go types, often with convenient getters
+// and setters.
+package resource
+
+import (
+	"encoding/json"
+
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/crossplane/crossplane-runtime/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composed"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
+)
+
+// ConnectionDetails created or updated during an operation on an external
+// resource, for example usernames, passwords, endpoints, ports, etc.
+type ConnectionDetails map[string][]byte
+
+// A Composite resource - aka an XR.
+type Composite struct {
+	Resource          *composite.Unstructured
+	ConnectionDetails ConnectionDetails
+}
+
+// A Name uniquely identifies a composed resource within a Composition Function
+// pipeline. It's not the resource's metadata.name.
+type Name string
+
+// DesiredComposed reflects the desired state of a composed resource.
+type DesiredComposed struct {
+	Resource *composed.Unstructured
+
+	Ready Ready
+}
+
+// Ready indicates whether a composed resource should be considered ready.
+type Ready int
+
+// Composed resource readiness.
+const (
+	ReadyUnspecified Ready = iota
+	ReadyTrue
+	ReadyFalse
+)
+
+// NewDesiredComposedResource returns a new, empty desired composed resource.
+func NewDesiredComposedResource() DesiredComposed {
+	return DesiredComposed{Resource: composed.New()}
+}
+
+// DesiredComposedResources  indexed by resource name.
+type DesiredComposedResources map[Name]DesiredComposed
+
+// ObservedComposed reflects the observed state of a composed resource.
+type ObservedComposed struct {
+	Resource          *composed.Unstructured
+	ConnectionDetails ConnectionDetails
+}
+
+// ObservedComposedResources indexed by resource name.
+type ObservedComposedResources map[Name]ObservedComposed
+
+// AsObject gets the supplied Kubernetes object from the supplied struct.
+func AsObject(s *structpb.Struct, o runtime.Object) error {
+	// We try to avoid a JSON round-trip if o is backed by unstructured data.
+	switch u := o.(type) {
+	case *unstructured.Unstructured:
+		u.Object = s.AsMap()
+		return nil
+	case wrapped:
+		u.GetUnstructured().Object = s.AsMap()
+		return nil
+	default:
+		b, err := protojson.Marshal(s)
+		if err != nil {
+			return errors.Wrapf(err, "cannot marshal %T to JSON", s)
+		}
+		return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
+	}
+}
+
+// AsStruct gets the supplied struct from the supplied Kubernetes object.
+func AsStruct(o runtime.Object) (*structpb.Struct, error) {
+	// We try to avoid a JSON round-trip if o is backed by unstructured data.
+	switch u := o.(type) {
+	case *unstructured.Unstructured:
+		s, err := structpb.NewStruct(u.Object)
+		return s, errors.Wrapf(err, "cannot create new Struct from %T", u)
+	case wrapped:
+		s, err := structpb.NewStruct(u.GetUnstructured().Object)
+		return s, errors.Wrapf(err, "cannot create new Struct from %T", u)
+	default:
+		b, err := json.Marshal(o)
+		if err != nil {
+			return nil, errors.Wrapf(err, "cannot marshal %T to JSON", o)
+		}
+		s := &structpb.Struct{}
+		return s, errors.Wrapf(protojson.Unmarshal(b, s), "cannot unmarshal JSON from %T into %T", o, s)
+	}
+}
+
+type wrapped interface {
+	GetUnstructured() *unstructured.Unstructured
+}
+
+// MustStructObject is intended only for use in tests. It returns the supplied
+// object as a struct. It panics if it can't.
+func MustStructObject(o runtime.Object) *structpb.Struct {
+	s, err := AsStruct(o)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+// MustStructJSON is intended only for use in tests. It returns the supplied
+// JSON string as a struct. It panics if it can't.
+func MustStructJSON(j string) *structpb.Struct {
+	s := &structpb.Struct{}
+	if err := protojson.Unmarshal([]byte(j), s); err != nil {
+		panic(err)
+	}
+	return s
+}

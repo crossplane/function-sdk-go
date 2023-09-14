@@ -37,6 +37,7 @@ linters-settings:
       - standard
       - default
       - prefix(github.com/crossplane/crossplane-runtime)
+      - prefix(github.com/crossplane/function-sdk-go)
       - blank
       - dot
 
