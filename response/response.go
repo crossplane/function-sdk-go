@@ -61,7 +61,7 @@ func SetDesiredCompositeResource(rsp *v1beta1.RunFunctionResponse, xr *resource.
 // supplied response. The caller must be sure to avoid overwriting the desired
 // state that may have been accumulated by previous Functions in the pipeline,
 // unless they intend to.
-func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[resource.Name]resource.DesiredComposed) error {
+func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[resource.Name]*resource.DesiredComposed) error {
 	if rsp.Desired == nil {
 		rsp.Desired = &v1beta1.State{}
 	}

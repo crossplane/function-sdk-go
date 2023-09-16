@@ -67,10 +67,10 @@ func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Com
 }
 
 // GetDesiredComposedResources from the supplied request.
-func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]resource.DesiredComposed, error) {
-	dcds := map[resource.Name]resource.DesiredComposed{}
+func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]*resource.DesiredComposed, error) {
+	dcds := map[resource.Name]*resource.DesiredComposed{}
 	for name, r := range req.GetDesired().GetResources() {
-		dcd := resource.DesiredComposed{Resource: composed.New()}
+		dcd := &resource.DesiredComposed{Resource: composed.New()}
 		if err := resource.AsObject(r.GetResource(), dcd.Resource); err != nil {
 			return nil, err
 		}
