@@ -68,17 +68,11 @@ func NewDesiredComposedResource() DesiredComposed {
 	return DesiredComposed{Resource: composed.New()}
 }
 
-// DesiredComposedResources  indexed by resource name.
-type DesiredComposedResources map[Name]DesiredComposed
-
 // ObservedComposed reflects the observed state of a composed resource.
 type ObservedComposed struct {
 	Resource          *composed.Unstructured
 	ConnectionDetails ConnectionDetails
 }
-
-// ObservedComposedResources indexed by resource name.
-type ObservedComposedResources map[Name]ObservedComposed
 
 // AsObject gets the supplied Kubernetes object from the supplied struct.
 func AsObject(s *structpb.Struct, o runtime.Object) error {

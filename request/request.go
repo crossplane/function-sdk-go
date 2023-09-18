@@ -44,8 +44,8 @@ func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Co
 }
 
 // GetObservedComposedResources from the supplied request.
-func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (resource.ObservedComposedResources, error) {
-	ocds := resource.ObservedComposedResources{}
+func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]resource.ObservedComposed, error) {
+	ocds := map[resource.Name]resource.ObservedComposed{}
 	for name, r := range req.GetObserved().GetResources() {
 		ocd := resource.ObservedComposed{Resource: composed.New(), ConnectionDetails: r.GetConnectionDetails()}
 		if err := resource.AsObject(r.GetResource(), ocd.Resource); err != nil {
@@ -67,14 +67,14 @@ func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Com
 }
 
 // GetDesiredComposedResources from the supplied request.
-func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (resource.DesiredComposedResources, error) {
-	ocds := resource.DesiredComposedResources{}
+func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]*resource.DesiredComposed, error) {
+	dcds := map[resource.Name]*resource.DesiredComposed{}
 	for name, r := range req.GetDesired().GetResources() {
-		ocd := resource.DesiredComposed{Resource: composed.New()}
-		if err := resource.AsObject(r.GetResource(), ocd.Resource); err != nil {
+		dcd := &resource.DesiredComposed{Resource: composed.New()}
+		if err := resource.AsObject(r.GetResource(), dcd.Resource); err != nil {
 			return nil, err
 		}
-		ocds[resource.Name(name)] = ocd
+		dcds[resource.Name(name)] = dcd
 	}
-	return ocds, nil
+	return dcds, nil
 }
