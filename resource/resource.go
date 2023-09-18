@@ -54,13 +54,13 @@ type DesiredComposed struct {
 }
 
 // Ready indicates whether a composed resource should be considered ready.
-type Ready int
+type Ready string
 
 // Composed resource readiness.
 const (
-	ReadyUnspecified Ready = iota
-	ReadyTrue
-	ReadyFalse
+	ReadyUnspecified Ready = "Unspecified"
+	ReadyTrue        Ready = "True"
+	ReadyFalse       Ready = "False"
 )
 
 // NewDesiredComposedResource returns a new, empty desired composed resource.
