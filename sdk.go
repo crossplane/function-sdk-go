@@ -68,6 +68,14 @@ func Listen(network, address string) ServeOption {
 // well as a CA certificate (ca.crt) that will be used to authenticate clients.
 func MTLSCertificates(dir string) ServeOption {
 	return func(o *ServeOptions) error {
+		if dir == "" {
+			// We want to support passing both MTLSCertificates and
+			// Insecure as they were supplied as flags. So we don't
+			// want this to fail because no dir was supplied.
+			// If no TLS dir is supplied and insecure is false we'll
+			// return an error due to having no credentials specified.
+			return nil
+		}
 		crt, err := tls.LoadX509KeyPair(
 			filepath.Clean(filepath.Join(dir, "tls.crt")),
 			filepath.Clean(filepath.Join(dir, "tls.key")),
