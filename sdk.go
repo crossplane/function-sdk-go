@@ -32,8 +32,7 @@ import (
 	ginsecure "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
-
+	"github.com/crossplane/function-sdk-go/logging"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 )
 
