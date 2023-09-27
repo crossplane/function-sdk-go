@@ -64,8 +64,8 @@ const (
 )
 
 // NewDesiredComposedResource returns a new, empty desired composed resource.
-func NewDesiredComposedResource() DesiredComposed {
-	return DesiredComposed{Resource: composed.New()}
+func NewDesiredComposedResource() *DesiredComposed {
+	return &DesiredComposed{Resource: composed.New()}
 }
 
 // ObservedComposed reflects the observed state of a composed resource.
