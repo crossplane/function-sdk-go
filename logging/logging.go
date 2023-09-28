@@ -22,8 +22,12 @@ package logging
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // A Logger logs messages. Messages may be supplemented by structured data.
@@ -37,4 +41,15 @@ func NewNopLogger() Logger { return logging.NewNopLogger() }
 // etc). Debug messages are logged at V(1).
 func NewLogrLogger(l logr.Logger) Logger {
 	return logging.NewLogrLogger(l)
+}
+
+// NewLogger returns a new logger.
+func NewLogger(debug bool) (logging.Logger, error) {
+	o := []zap.Option{zap.AddCallerSkip(1)}
+	if debug {
+		zl, err := zap.NewDevelopment(o...)
+		return NewLogrLogger(zapr.NewLogger(zl)), errors.Wrap(err, "cannot create development zap logger")
+	}
+	zl, err := zap.NewProduction(o...)
+	return NewLogrLogger(zapr.NewLogger(zl)), errors.Wrap(err, "cannot create production zap logger")
 }

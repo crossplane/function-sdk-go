@@ -24,9 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	ginsecure "google.golang.org/grpc/credentials/insecure"
@@ -147,11 +145,5 @@ func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 
 // NewLogger returns a new logger.
 func NewLogger(debug bool) (logging.Logger, error) {
-	o := []zap.Option{zap.AddCallerSkip(1)}
-	if debug {
-		zl, err := zap.NewDevelopment(o...)
-		return logging.NewLogrLogger(zapr.NewLogger(zl)), errors.Wrap(err, "cannot create development zap logger")
-	}
-	zl, err := zap.NewProduction(o...)
-	return logging.NewLogrLogger(zapr.NewLogger(zl)), errors.Wrap(err, "cannot create production zap logger")
+	return logging.NewLogger(debug)
 }
