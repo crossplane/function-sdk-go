@@ -32,6 +32,15 @@ func New() *Unstructured {
 	return &Unstructured{unstructured.Unstructured{Object: make(map[string]any)}}
 }
 
+// From creates a new unstructured composed resource from the supplied object.
+func From(o runtime.Object) (*Unstructured, error) {
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
+	if err != nil {
+		return nil, err
+	}
+	return &Unstructured{unstructured.Unstructured{Object: obj}}, nil
+}
+
 // An Unstructured composed resource.
 type Unstructured struct {
 	unstructured.Unstructured
@@ -148,7 +157,26 @@ func (cd *Unstructured) GetBool(path string) (bool, error) {
 
 // GetInteger value of the supplied field path.
 func (cd *Unstructured) GetInteger(path string) (int64, error) {
-	return fieldpath.Pave(cd.Object).GetInteger(path)
+	// This is a bit of a hack. Kubernetes JSON decoders will get us a
+	// map[string]any where number values are int64, but protojson and structpb
+	// will get us one where number values are float64.
+	// https://pkg.go.dev/sigs.k8s.io/json#UnmarshalCaseSensitivePreserveInts
+	p := fieldpath.Pave(cd.Object)
+
+	// If we find an int64, return it.
+	i64, err := p.GetInteger(path)
+	if err == nil {
+		return i64, nil
+
+	}
+
+	// If not, try return (and truncate) a float64.
+	if f64, err := fieldpath.Pave(cd.Object).GetNumber(path); err == nil {
+		return int64(f64), nil
+	}
+
+	// If both fail, return our original error.
+	return 0, err
 }
 
 // SetValue at the supplied field path.
