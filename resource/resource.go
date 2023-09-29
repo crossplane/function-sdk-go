@@ -24,7 +24,6 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/function-sdk-go/errors"
@@ -77,44 +76,34 @@ type ObservedComposed struct {
 // AsObject gets the supplied Kubernetes object from the supplied struct.
 func AsObject(s *structpb.Struct, o runtime.Object) error {
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
-	switch u := o.(type) {
-	case *unstructured.Unstructured:
-		u.Object = s.AsMap()
+	// Any type that is or embeds *unstructured.Unstructured has this method.
+	if u, ok := o.(interface{ SetUnstructuredContent(map[string]any) }); ok {
+		u.SetUnstructuredContent(s.AsMap())
 		return nil
-	case wrapped:
-		u.GetUnstructured().Object = s.AsMap()
-		return nil
-	default:
-		b, err := protojson.Marshal(s)
-		if err != nil {
-			return errors.Wrapf(err, "cannot marshal %T to JSON", s)
-		}
-		return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
 	}
+
+	b, err := protojson.Marshal(s)
+	if err != nil {
+		return errors.Wrapf(err, "cannot marshal %T to JSON", s)
+	}
+	return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
 }
 
 // AsStruct gets the supplied struct from the supplied Kubernetes object.
 func AsStruct(o runtime.Object) (*structpb.Struct, error) {
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
-	switch u := o.(type) {
-	case *unstructured.Unstructured:
-		s, err := structpb.NewStruct(u.Object)
+	// Any type that is or embeds *unstructured.Unstructured has this method.
+	if u, ok := o.(interface{ UnstructuredContent() map[string]any }); ok {
+		s, err := structpb.NewStruct(u.UnstructuredContent())
 		return s, errors.Wrapf(err, "cannot create new Struct from %T", u)
-	case wrapped:
-		s, err := structpb.NewStruct(u.GetUnstructured().Object)
-		return s, errors.Wrapf(err, "cannot create new Struct from %T", u)
-	default:
-		b, err := json.Marshal(o)
-		if err != nil {
-			return nil, errors.Wrapf(err, "cannot marshal %T to JSON", o)
-		}
-		s := &structpb.Struct{}
-		return s, errors.Wrapf(protojson.Unmarshal(b, s), "cannot unmarshal JSON from %T into %T", o, s)
 	}
-}
 
-type wrapped interface {
-	GetUnstructured() *unstructured.Unstructured
+	b, err := json.Marshal(o)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot marshal %T to JSON", o)
+	}
+	s := &structpb.Struct{}
+	return s, errors.Wrapf(protojson.Unmarshal(b, s), "cannot unmarshal JSON from %T into %T", o, s)
 }
 
 // MustStructObject is intended only for use in tests. It returns the supplied
