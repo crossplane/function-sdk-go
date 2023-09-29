@@ -62,8 +62,8 @@ const (
 	ReadyFalse       Ready = "False"
 )
 
-// NewDesiredComposedResource returns a new, empty desired composed resource.
-func NewDesiredComposedResource() *DesiredComposed {
+// NewDesiredComposed returns a new, empty desired composed resource.
+func NewDesiredComposed() *DesiredComposed {
 	return &DesiredComposed{Resource: composed.New()}
 }
 
