@@ -38,6 +38,11 @@ func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Co
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetObserved().GetComposite().GetConnectionDetails(),
 	}
+
+	if xr.ConnectionDetails == nil {
+		xr.ConnectionDetails = make(resource.ConnectionDetails)
+	}
+
 	err := resource.AsObject(req.GetObserved().GetComposite().GetResource(), xr.Resource)
 	return xr, err
 }
@@ -47,6 +52,11 @@ func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource
 	ocds := map[resource.Name]resource.ObservedComposed{}
 	for name, r := range req.GetObserved().GetResources() {
 		ocd := resource.ObservedComposed{Resource: composed.New(), ConnectionDetails: r.GetConnectionDetails()}
+
+		if ocd.ConnectionDetails == nil {
+			ocd.ConnectionDetails = make(resource.ConnectionDetails)
+		}
+
 		if err := resource.AsObject(r.GetResource(), ocd.Resource); err != nil {
 			return nil, err
 		}
@@ -61,6 +71,11 @@ func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Com
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetDesired().GetComposite().GetConnectionDetails(),
 	}
+
+	if xr.ConnectionDetails == nil {
+		xr.ConnectionDetails = make(resource.ConnectionDetails)
+	}
+
 	err := resource.AsObject(req.GetDesired().GetComposite().GetResource(), xr.Resource)
 	return xr, err
 }
