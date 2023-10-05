@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
@@ -40,7 +41,16 @@ func To(req *v1beta1.RunFunctionRequest, ttl time.Duration) *v1beta1.RunFunction
 			Ttl: durationpb.New(ttl),
 		},
 		Desired: req.Desired,
+		Context: req.Context,
 	}
+}
+
+// SetContextKey sets context to the supplied key.
+func SetContextKey(rsp *v1beta1.RunFunctionResponse, key string, v *structpb.Value) {
+	if rsp.Context == nil {
+		rsp.Context = &structpb.Struct{Fields: make(map[string]*structpb.Value)}
+	}
+	rsp.Context.Fields[key] = v
 }
 
 // SetDesiredCompositeResource sets the desired composite resource in the
