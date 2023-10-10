@@ -7,7 +7,7 @@ require (
 	github.com/crossplane/crossplane-runtime v1.13.0
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.58.2
