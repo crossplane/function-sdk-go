@@ -36,7 +36,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	// Read the desired number of widgets from our observed XR. We don't have
 	// a struct for the XR, so we use an unstructured, fieldpath based getter.
 	widgets, err := oxr.Resource.GetInteger("spec.widgets")
-	oxr, err := request.GetObservedCompositeResource(req)
 	if err != nil {
 		response.Fatal(rsp, errors.Wrap(err, "cannot get desired spec.widgets from observed XR"))
 		return rsp, nil
