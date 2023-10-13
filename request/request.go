@@ -18,6 +18,7 @@ limitations under the License.
 package request
 
 import (
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/function-sdk-go/errors"
@@ -30,6 +31,16 @@ import (
 // GetInput from the supplied request. Input is loaded into the supplied object.
 func GetInput(req *v1beta1.RunFunctionRequest, into runtime.Object) error {
 	return errors.Wrap(resource.AsObject(req.GetInput(), into), "cannot get Function input %T from %T, into, req")
+}
+
+// GetContextKey gets context from the supplied key.
+func GetContextKey(req *v1beta1.RunFunctionRequest, key string) (*structpb.Value, bool) {
+	f := req.GetContext().GetFields()
+	if f == nil {
+		return nil, false
+	}
+	v, ok := f[key]
+	return v, ok
 }
 
 // GetObservedCompositeResource from the supplied request.
