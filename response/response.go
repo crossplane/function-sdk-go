@@ -47,7 +47,7 @@ func To(req *v1beta1.RunFunctionRequest, ttl time.Duration) *v1beta1.RunFunction
 
 // SetContextKey sets context to the supplied key.
 func SetContextKey(rsp *v1beta1.RunFunctionResponse, key string, v *structpb.Value) {
-	if rsp.Context == nil {
+	if rsp.GetContext().GetFields() == nil {
 		rsp.Context = &structpb.Struct{Fields: make(map[string]*structpb.Value)}
 	}
 	rsp.Context.Fields[key] = v
