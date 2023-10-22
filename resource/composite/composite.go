@@ -21,15 +21,15 @@ limitations under the License.
 package composite
 
 import (
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/claim"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
-	"github.com/pkg/errors"
 )
 
 // New returns a new unstructured composite resource (XR).
@@ -146,8 +146,8 @@ func (xr *Unstructured) GetCompositionUpdatePolicy() *xpv1.UpdatePolicy {
 }
 
 // GetClaimReference of this composite resource.
-func (xr *Unstructured) GetClaimReference() *corev1.ObjectReference {
-	out := &corev1.ObjectReference{}
+func (xr *Unstructured) GetClaimReference() *claim.Reference {
+	out := &claim.Reference{}
 	if err := fieldpath.Pave(xr.Object).GetValueInto("spec.claimRef", out); err != nil {
 		return nil
 	}
@@ -155,7 +155,7 @@ func (xr *Unstructured) GetClaimReference() *corev1.ObjectReference {
 }
 
 // SetClaimReference of this composite resource.
-func (xr *Unstructured) SetClaimReference(ref *corev1.ObjectReference) {
+func (xr *Unstructured) SetClaimReference(ref *claim.Reference) {
 	_ = fieldpath.Pave(xr.Object).SetValue("spec.claimRef", ref)
 }
 
