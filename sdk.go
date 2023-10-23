@@ -24,14 +24,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/crossplane/function-sdk-go/logging"
+	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	ginsecure "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
-
-	"github.com/crossplane/function-sdk-go/logging"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 )
 
 // Default ServeOptions.

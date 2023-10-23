@@ -20,13 +20,12 @@ package request
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
+	"github.com/google/go-cmp/cmp"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestGetObservedCompositeResource(t *testing.T) {
