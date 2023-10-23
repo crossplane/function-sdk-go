@@ -27,6 +27,7 @@ GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
 GO_SUBDIRS += proto
 GO111MODULE = on
 GOLANGCILINT_VERSION = 1.54.2
+GO_LINT_ARGS ?= "--fix"
 -include build/makelib/golang.mk
 
 # ====================================================================================
