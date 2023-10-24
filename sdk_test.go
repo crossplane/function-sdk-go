@@ -76,5 +76,5 @@ func Example() {
 	fmt.Println(string(j))
 
 	// Output:
-	// {"meta":{"ttl":"60s"}, "desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1", "kind":"CoolResource", "metadata":{"labels":{"coolness":"high"}}, "spec":{"widgets":9001}}}}}}
+	// {"meta":{"ttl":"60s"},"desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1","kind":"CoolResource","metadata":{"labels":{"coolness":"high"}},"spec":{"widgets":9001}}}}}}
 }

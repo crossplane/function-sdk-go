@@ -25,6 +25,8 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // New returns a new unstructured composed resource.
@@ -171,12 +173,25 @@ func (cd *Unstructured) GetInteger(path string) (int64, error) {
 	}
 
 	// If not, try return (and truncate) a float64.
-	if f64, err := fieldpath.Pave(cd.Object).GetNumber(path); err == nil {
+	if f64, err := getNumber(p, path); err == nil {
 		return int64(f64), nil
 	}
 
 	// If both fail, return our original error.
 	return 0, err
+}
+
+func getNumber(p *fieldpath.Paved, path string) (float64, error) {
+	v, err := p.GetValue(path)
+	if err != nil {
+		return 0, err
+	}
+
+	f, ok := v.(float64)
+	if !ok {
+		return 0, errors.Errorf("%s: not a (float64) number", path)
+	}
+	return f, nil
 }
 
 // SetValue at the supplied field path.
