@@ -18,13 +18,14 @@ limitations under the License.
 package request
 
 import (
+	"google.golang.org/protobuf/types/known/structpb"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
-	"google.golang.org/protobuf/types/known/structpb"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // GetInput from the supplied request. Input is loaded into the supplied object.

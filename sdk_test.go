@@ -19,12 +19,13 @@ package function
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/response"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var req = &v1beta1.RunFunctionRequest{

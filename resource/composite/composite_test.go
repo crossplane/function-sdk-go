@@ -20,9 +20,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 )
 
 var manifest = []byte(`

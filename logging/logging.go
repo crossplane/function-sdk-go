@@ -21,11 +21,13 @@ limitations under the License.
 package logging
 
 import (
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
+
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // A Logger logs messages. Messages may be supplemented by structured data.
