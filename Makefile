@@ -26,7 +26,7 @@ GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
 GO_SUBDIRS += proto
 GO111MODULE = on
-GOLANGCILINT_VERSION = 1.54.2
+GOLANGCILINT_VERSION = 1.55.1
 GO_LINT_ARGS ?= "--fix"
 -include build/makelib/golang.mk
 

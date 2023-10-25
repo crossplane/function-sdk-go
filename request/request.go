@@ -99,7 +99,7 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 		if err := resource.AsObject(r.GetResource(), dcd.Resource); err != nil {
 			return nil, err
 		}
-		switch r.Ready {
+		switch r.GetReady() {
 		case v1beta1.Ready_READY_UNSPECIFIED:
 			dcd.Ready = resource.ReadyUnspecified
 		case v1beta1.Ready_READY_TRUE:
