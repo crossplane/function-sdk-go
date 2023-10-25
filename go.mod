@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/bufbuild/buf v1.27.1
-	github.com/crossplane/crossplane-runtime v1.14.0-rc.0.0.20231019152856-a5df125af6f8
+	github.com/crossplane/crossplane-runtime v1.14.0-rc.1
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-cmp v0.6.0
