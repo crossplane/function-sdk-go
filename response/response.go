@@ -40,8 +40,8 @@ func To(req *v1beta1.RunFunctionRequest, ttl time.Duration) *v1beta1.RunFunction
 			Tag: req.GetMeta().GetTag(),
 			Ttl: durationpb.New(ttl),
 		},
-		Desired: req.Desired,
-		Context: req.Context,
+		Desired: req.GetDesired(),
+		Context: req.GetContext(),
 	}
 }
 
@@ -58,7 +58,7 @@ func SetContextKey(rsp *v1beta1.RunFunctionResponse, key string, v *structpb.Val
 // state that may have been accumulated by previous Functions in the pipeline,
 // unless they intend to.
 func SetDesiredCompositeResource(rsp *v1beta1.RunFunctionResponse, xr *resource.Composite) error {
-	if rsp.Desired == nil {
+	if rsp.GetDesired() == nil {
 		rsp.Desired = &v1beta1.State{}
 	}
 	s, err := resource.AsStruct(xr.Resource)
@@ -71,10 +71,10 @@ func SetDesiredCompositeResource(rsp *v1beta1.RunFunctionResponse, xr *resource.
 // state that may have been accumulated by previous Functions in the pipeline,
 // unless they intend to.
 func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[resource.Name]*resource.DesiredComposed) error {
-	if rsp.Desired == nil {
+	if rsp.GetDesired() == nil {
 		rsp.Desired = &v1beta1.State{}
 	}
-	if rsp.Desired.Resources == nil {
+	if rsp.GetDesired().GetResources() == nil {
 		rsp.Desired.Resources = map[string]*v1beta1.Resource{}
 	}
 	for name, dcd := range dcds {
@@ -98,10 +98,10 @@ func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[reso
 
 // Fatal adds a fatal result to the supplied RunFunctionResponse.
 func Fatal(rsp *v1beta1.RunFunctionResponse, err error) {
-	if rsp.Results == nil {
+	if rsp.GetResults() == nil {
 		rsp.Results = make([]*v1beta1.Result, 0, 1)
 	}
-	rsp.Results = append(rsp.Results, &v1beta1.Result{
+	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
 		Severity: v1beta1.Severity_SEVERITY_FATAL,
 		Message:  err.Error(),
 	})
@@ -109,10 +109,10 @@ func Fatal(rsp *v1beta1.RunFunctionResponse, err error) {
 
 // Warning adds a warning result to the supplied RunFunctionResponse.
 func Warning(rsp *v1beta1.RunFunctionResponse, err error) {
-	if rsp.Results == nil {
+	if rsp.GetResults() == nil {
 		rsp.Results = make([]*v1beta1.Result, 0, 1)
 	}
-	rsp.Results = append(rsp.Results, &v1beta1.Result{
+	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
 		Severity: v1beta1.Severity_SEVERITY_WARNING,
 		Message:  err.Error(),
 	})
@@ -120,10 +120,10 @@ func Warning(rsp *v1beta1.RunFunctionResponse, err error) {
 
 // Normal adds a normal result to the supplied RunFunctionResponse.
 func Normal(rsp *v1beta1.RunFunctionResponse, message string) {
-	if rsp.Results == nil {
+	if rsp.GetResults() == nil {
 		rsp.Results = make([]*v1beta1.Result, 0, 1)
 	}
-	rsp.Results = append(rsp.Results, &v1beta1.Result{
+	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
 		Severity: v1beta1.Severity_SEVERITY_NORMAL,
 		Message:  message,
 	})
