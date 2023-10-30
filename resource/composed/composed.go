@@ -82,17 +82,36 @@ func From(o runtime.Object) (*Unstructured, error) {
 		return nil, err
 	}
 
-	// Unfortunately go-json-experiment also has different omitempty semantics
-	// for integers, in that it will include a zero-value integer with the
-	// omitempty tag. That will be the case for metadata.generation, so we
-	// delete it. It's not something a function should ever be setting.
-	if m, exists := obj["metadata"]; exists {
-		if mo, ok := m.(map[string]any); ok {
-			delete(mo, "generation")
-		}
-	}
+	// Unfortunately we still need to cleanup some object metadata.
+	cleanupMetadata(obj)
 
 	return &Unstructured{unstructured.Unstructured{Object: obj}}, nil
+}
+
+func cleanupMetadata(obj map[string]any) {
+	m, ok := obj["metadata"]
+	if !ok {
+		// If there's no metadata there's nothing to do.
+		return
+	}
+
+	mo, ok := m.(map[string]any)
+	if !ok {
+		// If metadata isn't an object there's nothing to do.
+		return
+	}
+
+	// The ObjectMeta struct that all Kubernetes types include has a non-nil
+	// integer Generation field with the omitempty tag. Regular pkg/json removes
+	// this, but go-json-experiment does not (it would need the new omitzero
+	// tag). So, we clean it up manually. No function should ever be setting it.
+	delete(mo, "generation")
+
+	// If metadata has no fields, delete it. This prevents us from serializing
+	// metadata: {}, which SSA would interpret as "make metadata empty".
+	if len(mo) == 0 {
+		delete(obj, "metadata")
+	}
 }
 
 // An Unstructured composed resource.
