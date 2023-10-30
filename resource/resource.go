@@ -20,8 +20,7 @@ limitations under the License.
 package resource
 
 import (
-	"encoding/json"
-
+	"github.com/go-json-experiment/json"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime"

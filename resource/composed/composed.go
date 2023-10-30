@@ -18,6 +18,7 @@ limitations under the License.
 package composed
 
 import (
+	"github.com/go-json-experiment/json"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,10 +37,44 @@ func New() *Unstructured {
 
 // From creates a new unstructured composed resource from the supplied object.
 func From(o runtime.Object) (*Unstructured, error) {
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(o)
+	// If the supplied object is already unstructured content, avoid a JSON
+	// round trip and use it.
+	if u, ok := o.(interface{ UnstructuredContent() map[string]any }); ok {
+		return &Unstructured{unstructured.Unstructured{Object: u.UnstructuredContent()}}, nil
+	}
+
+	// Round-trip the supplied object through JSON to convert it. We use the
+	// go-json-experiment package for this because it honors the omitempty field
+	// for non-pointer struct fields.
+	//
+	// At the time of writing many Crossplane structs contain fields that have
+	// the omitempty struct tag, but non-pointer struct values. pkg/json does
+	// not omit these fields. It instead includes them as empty JSON objects.
+	// Crossplane will interpret this as part of a server-side apply fully
+	// specified intent and assume the function actually has opinion about the
+	// field when it doesn't. We should make these fields pointers, but it's
+	// easier and safer in the meantime to work around it here.
+	//
+	// https://github.com/go-json-experiment/json#behavior-changes
+	j, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
+	obj := make(map[string]any)
+	if err := json.Unmarshal(j, &obj); err != nil {
+		return nil, err
+	}
+
+	// Unfortunately go-json-experiment also has different omitempty semantics
+	// for integers, in that it will include a zero-value integer with the
+	// omitempty tag. That will be the case for metadata.generation, so we
+	// delete it. It's not something a function should ever be setting.
+	if m, exists := obj["metadata"]; exists {
+		if mo, ok := m.(map[string]any); ok {
+			delete(mo, "generation")
+		}
+	}
+
 	return &Unstructured{unstructured.Unstructured{Object: obj}}, nil
 }
 
