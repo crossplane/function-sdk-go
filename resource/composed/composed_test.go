@@ -56,7 +56,17 @@ func Example() {
 	//   coolness: 9001
 }
 
+func ExampleScheme() {
+	// Add all v1beta1 types to the scheme so that From can automatically
+	// determine their apiVersion and kind.
+	v1beta1.AddToScheme(Scheme)
+}
+
 func ExampleFrom() {
+	// Add all v1beta1 types to the scheme so that From can automatically
+	// determine their apiVersion and kind.
+	v1beta1.AddToScheme(Scheme)
+
 	// Create a strongly typed runtime.Object, imported from a provider.
 	b := &v1beta1.Bucket{
 		ObjectMeta: metav1.ObjectMeta{

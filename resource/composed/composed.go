@@ -30,6 +30,13 @@ import (
 	"github.com/crossplane/function-sdk-go/errors"
 )
 
+// Scheme used to determine the type of any runtime.Object passed to From.
+var Scheme *runtime.Scheme
+
+func init() {
+	Scheme = runtime.NewScheme()
+}
+
 // New returns a new unstructured composed resource.
 func New() *Unstructured {
 	return &Unstructured{unstructured.Unstructured{Object: make(map[string]any)}}
@@ -41,6 +48,16 @@ func From(o runtime.Object) (*Unstructured, error) {
 	// round trip and use it.
 	if u, ok := o.(interface{ UnstructuredContent() map[string]any }); ok {
 		return &Unstructured{unstructured.Unstructured{Object: u.UnstructuredContent()}}, nil
+	}
+
+	// Set the object's GVK from our scheme.
+	gvks, _, err := Scheme.ObjectKinds(o)
+	if err != nil {
+		return nil, errors.Wrap(err, "did you add it to composed.Scheme?")
+	}
+	// There should almost never be more than one GVK for a type.
+	for _, gvk := range gvks {
+		o.GetObjectKind().SetGroupVersionKind(gvk)
 	}
 
 	// Round-trip the supplied object through JSON to convert it. We use the
