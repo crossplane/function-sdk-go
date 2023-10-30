@@ -18,9 +18,14 @@ package composed
 
 import (
 	"fmt"
+	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/upbound/provider-aws/apis/s3/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 )
@@ -103,4 +108,88 @@ func ExampleFrom() {
 	// spec:
 	//   forProvider:
 	//     region: us-east-2
+}
+
+func TestFrom(t *testing.T) {
+	v1beta1.AddToScheme(Scheme)
+
+	type args struct {
+		o runtime.Object
+	}
+	type want struct {
+		cd  *Unstructured
+		err error
+	}
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   want
+	}{
+		"WithMetadata": {
+			reason: "A resource with metadata should not grow any extra metadata fields during conversion",
+			args: args{
+				o: &v1beta1.Bucket{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cool-bucket",
+					},
+					Spec: v1beta1.BucketSpec{
+						ForProvider: v1beta1.BucketParameters{
+							Region: ptr.To[string]("us-east-2"),
+						},
+					},
+				},
+			},
+			want: want{
+				cd: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": v1beta1.CRDGroupVersion.String(),
+					"kind":       v1beta1.Bucket_Kind,
+					"metadata": map[string]any{
+						"name": "cool-bucket",
+					},
+					"spec": map[string]any{
+						"forProvider": map[string]any{
+							"region": "us-east-2",
+						},
+					},
+				}}},
+			},
+		},
+		"WithoutMetadata": {
+			reason: "A resource with no metadata should not grow a metadata object during conversion",
+			args: args{
+				o: &v1beta1.Bucket{
+					Spec: v1beta1.BucketSpec{
+						ForProvider: v1beta1.BucketParameters{
+							Region: ptr.To[string]("us-east-2"),
+						},
+					},
+				},
+			},
+			want: want{
+				cd: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": v1beta1.CRDGroupVersion.String(),
+					"kind":       v1beta1.Bucket_Kind,
+					"spec": map[string]any{
+						"forProvider": map[string]any{
+							"region": "us-east-2",
+						},
+					},
+				}}},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			cd, err := From(tc.args.o)
+
+			if diff := cmp.Diff(tc.want.cd, cd); diff != "" {
+				t.Errorf("\n%s\nFrom(...): -want, +got:\n%s", tc.reason, diff)
+			}
+
+			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
+				t.Errorf("\n%s\nFrom(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
 }
