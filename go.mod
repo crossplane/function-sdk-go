@@ -3,7 +3,7 @@ module github.com/crossplane/function-sdk-go
 go 1.21
 
 require (
-	github.com/bufbuild/buf v1.27.1
+	github.com/bufbuild/buf v1.27.2
 	github.com/crossplane/crossplane-runtime v1.14.0-rc.1
 	github.com/go-json-experiment/json v0.0.0-20231013223334-54c864be5b8d
 	github.com/go-logr/logr v1.2.4
@@ -82,7 +82,7 @@ require (
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.1 // indirect
+	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
