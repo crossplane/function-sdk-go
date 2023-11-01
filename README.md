@@ -1,5 +1,5 @@
 # function-sdk-go
-[![CI](https://github.com/crossplane/function-sdk-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-sdk-go/actions/workflows/ci.yml) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/crossplane/function-sdk-go) [![Go Reference](https://pkg.go.dev/badge/github.com/crossplane/function-sdk-go.svg)](https://pkg.go.dev/github.com/crossplane/function-sdk-go)
+[![CI](https://github.com/crossplane/function-sdk-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-sdk-go/actions/workflows/ci.yml) ![GitHub release (latest SemVer)](https://img.shields.io/github/release/crossplane/function-sdk-go) [![Go Reference](https://pkg.go.dev/badge/github.com/crossplane/function-sdk-go.svg)](https://pkg.go.dev/github.com/crossplane/function-sdk-go)
 
 The [Go][go] SDK for writing [composition functions][functions].
 
