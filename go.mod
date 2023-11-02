@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/upbound/provider-aws v0.43.0
+	github.com/upbound/provider-aws v0.43.1
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0

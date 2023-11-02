@@ -410,8 +410,8 @@ github.com/tetratelabs/wazero v1.5.0 h1:Yz3fZHivfDiZFUXnWMPUoiW7s8tC1sjdBtlJn08q
 github.com/tetratelabs/wazero v1.5.0/go.mod h1:0U0G41+ochRKoPKCJlh0jMg1CHkyfK8kDqiirMmKY8A=
 github.com/tmccombs/hcl2json v0.3.3 h1:+DLNYqpWE0CsOQiEZu+OZm5ZBImake3wtITYxQ8uLFQ=
 github.com/tmccombs/hcl2json v0.3.3/go.mod h1:Y2chtz2x9bAeRTvSibVRVgbLJhLJXKlUeIvjeVdnm4w=
-github.com/upbound/provider-aws v0.43.0 h1:ycb6ybc1Dauy0DKiuXShbcjuh7GmPJRBjNngd5dluz8=
-github.com/upbound/provider-aws v0.43.0/go.mod h1:m7hoCp3D469sk1vaRh8u4hC8SmpPBJO70JrZS9p2H/U=
+github.com/upbound/provider-aws v0.43.1 h1:erhNoQMShSxx9jP7+nVIpRFL7Wt3DeJ/dNmcugjO7Ao=
+github.com/upbound/provider-aws v0.43.1/go.mod h1:PScJQ3C3dd1u0l7XHn71j8ww1bNr4Zy9jxDmV+t/YNE=
 github.com/vbatts/tar-split v0.11.5 h1:3bHCTIheBm1qFTcgh9oPu+nNBtX+XJIupG/vacinCts=
 github.com/vbatts/tar-split v0.11.5/go.mod h1:yZbwRsSeGjusneWgA781EKej9HF8vme8okylkAeNKLk=
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
