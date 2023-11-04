@@ -7,7 +7,7 @@ require (
 	github.com/crossplane/crossplane-runtime v1.14.1
 	github.com/go-json-experiment/json v0.0.0-20231013223334-54c864be5b8d
 	github.com/go-logr/logr v1.3.0
-	github.com/go-logr/zapr v1.2.4
+	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/upbound/provider-aws v0.43.1
