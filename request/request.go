@@ -19,6 +19,7 @@ package request
 
 import (
 	"google.golang.org/protobuf/types/known/structpb"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/function-sdk-go/errors"
@@ -110,4 +111,20 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 		dcds[resource.Name(name)] = dcd
 	}
 	return dcds, nil
+}
+
+// GetExtraResources from the supplied request.
+func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.ExtraResource, error) {
+	out := make(map[string][]resource.ExtraResource, len(req.GetExtraResources()))
+	for name, xrs := range req.GetExtraResources() {
+		out[name] = []resource.ExtraResource{}
+		for _, i := range xrs.GetItems() {
+			r := &resource.ExtraResource{Resource: &unstructured.Unstructured{}}
+			if err := resource.AsObject(i, r.Resource); err != nil {
+				return nil, err
+			}
+			out[name] = append(out[name], *r)
+		}
+	}
+	return out, nil
 }
