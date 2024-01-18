@@ -114,13 +114,13 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 }
 
 // GetExtraResources from the supplied request.
-func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.ExtraResource, error) {
-	out := make(map[string][]resource.ExtraResource, len(req.GetExtraResources()))
-	for name, xrs := range req.GetExtraResources() {
-		out[name] = []resource.ExtraResource{}
-		for _, i := range xrs.GetItems() {
-			r := &resource.ExtraResource{Resource: &unstructured.Unstructured{}}
-			if err := resource.AsObject(i, r.Resource); err != nil {
+func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.Extra, error) {
+	out := make(map[string][]resource.Extra, len(req.GetExtraResources()))
+	for name, ers := range req.GetExtraResources() {
+		out[name] = []resource.Extra{}
+		for _, i := range ers.GetItems() {
+			r := &resource.Extra{Resource: &unstructured.Unstructured{}}
+			if err := resource.AsObject(i.GetResource(), r.Resource); err != nil {
 				return nil, err
 			}
 			out[name] = append(out[name], *r)

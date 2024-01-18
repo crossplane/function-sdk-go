@@ -52,8 +52,8 @@ type DesiredComposed struct {
 	Ready Ready
 }
 
-// ExtraResource is a resource requested by a Function.
-type ExtraResource struct {
+// Extra is a resource requested by a Function.
+type Extra struct {
 	Resource *unstructured.Unstructured
 }
 
