@@ -23,6 +23,7 @@ import (
 	"github.com/go-json-experiment/json"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/function-sdk-go/errors"
@@ -49,6 +50,11 @@ type DesiredComposed struct {
 	Resource *composed.Unstructured
 
 	Ready Ready
+}
+
+// Extra is a resource requested by a Function.
+type Extra struct {
+	Resource *unstructured.Unstructured
 }
 
 // Ready indicates whether a composed resource should be considered ready.
