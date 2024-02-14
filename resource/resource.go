@@ -78,8 +78,35 @@ type ObservedComposed struct {
 	ConnectionDetails ConnectionDetails
 }
 
+// NOTE(negz): resource.Options is an intentionally generic name. At the time of
+// writing only AsObject takes Options, but in future AsStruct etc could also
+// take them if there is a need. This is similar to json.Options, which is used
+// by both json.Marshal and json.Unmarshal. Some options will only be applicable
+// to certain functions.
+
+// Options configure conversion between protobuf and Go types.
+type Options struct {
+	jo []json.Options
+}
+
+// An Option configures conversion between protobuf and Go types.
+type Option func(opts *Options)
+
+// RejectUnknownMembers rejects unknown members when converting from
+// unstructured data (such as a Struct) to a structured runtime.Object.
+func RejectUnknownMembers(v bool) Option {
+	return func(opts *Options) {
+		opts.jo = append(opts.jo, json.RejectUnknownMembers(v))
+	}
+}
+
 // AsObject gets the supplied Kubernetes object from the supplied struct.
-func AsObject(s *structpb.Struct, o runtime.Object) error {
+func AsObject(s *structpb.Struct, o runtime.Object, opts ...Option) error {
+	aoo := &Options{}
+	for _, fn := range opts {
+		fn(aoo)
+	}
+
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
 	// Any type that is or embeds *unstructured.Unstructured has this method.
 	if u, ok := o.(interface{ SetUnstructuredContent(map[string]any) }); ok {
@@ -91,7 +118,7 @@ func AsObject(s *structpb.Struct, o runtime.Object) error {
 	if err != nil {
 		return errors.Wrapf(err, "cannot marshal %T to JSON", s)
 	}
-	return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
+	return errors.Wrapf(json.Unmarshal(b, o, aoo.jo...), "cannot unmarshal JSON from %T into %T", s, o)
 }
 
 // AsStruct gets the supplied struct from the supplied Kubernetes object.
