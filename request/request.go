@@ -31,7 +31,7 @@ import (
 
 // GetInput from the supplied request. Input is loaded into the supplied object.
 func GetInput(req *v1beta1.RunFunctionRequest, into runtime.Object) error {
-	return errors.Wrap(resource.AsObject(req.GetInput(), into), "cannot get Function input %T from %T, into, req")
+	return errors.Wrapf(resource.AsObject(req.GetInput(), into), "cannot get function input %T from %T", into, req)
 }
 
 // GetContextKey gets context from the supplied key.
