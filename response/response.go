@@ -18,7 +18,6 @@ limitations under the License.
 package response
 
 import (
-	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -94,42 +93,4 @@ func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[reso
 		rsp.Desired.Resources[string(name)] = r
 	}
 	return nil
-}
-
-// Fatal adds a fatal result to the supplied RunFunctionResponse.
-func Fatal(rsp *v1beta1.RunFunctionResponse, err error) {
-	if rsp.GetResults() == nil {
-		rsp.Results = make([]*v1beta1.Result, 0, 1)
-	}
-	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
-		Severity: v1beta1.Severity_SEVERITY_FATAL,
-		Message:  err.Error(),
-	})
-}
-
-// Warning adds a warning result to the supplied RunFunctionResponse.
-func Warning(rsp *v1beta1.RunFunctionResponse, err error) {
-	if rsp.GetResults() == nil {
-		rsp.Results = make([]*v1beta1.Result, 0, 1)
-	}
-	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
-		Severity: v1beta1.Severity_SEVERITY_WARNING,
-		Message:  err.Error(),
-	})
-}
-
-// Normal adds a normal result to the supplied RunFunctionResponse.
-func Normal(rsp *v1beta1.RunFunctionResponse, message string) {
-	if rsp.GetResults() == nil {
-		rsp.Results = make([]*v1beta1.Result, 0, 1)
-	}
-	rsp.Results = append(rsp.GetResults(), &v1beta1.Result{
-		Severity: v1beta1.Severity_SEVERITY_NORMAL,
-		Message:  message,
-	})
-}
-
-// Normalf adds a normal result to the supplied RunFunctionResponse.
-func Normalf(rsp *v1beta1.RunFunctionResponse, format string, a ...any) {
-	Normal(rsp, fmt.Sprintf(format, a...))
 }
