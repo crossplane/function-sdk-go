@@ -30,8 +30,8 @@ import (
 )
 
 // GetInput from the supplied request. Input is loaded into the supplied object.
-func GetInput(req *v1beta1.RunFunctionRequest, into runtime.Object) error {
-	return errors.Wrap(resource.AsObject(req.GetInput(), into), "cannot get Function input %T from %T, into, req")
+func GetInput(req *v1beta1.RunFunctionRequest, into runtime.Object, opts ...resource.UnmarshalOptions) error {
+	return errors.Wrap(resource.AsObject(req.GetInput(), into, opts...), "cannot get Function input %T from %T, into, req")
 }
 
 // GetContextKey gets context from the supplied key.
@@ -45,7 +45,7 @@ func GetContextKey(req *v1beta1.RunFunctionRequest, key string) (*structpb.Value
 }
 
 // GetObservedCompositeResource from the supplied request.
-func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Composite, error) {
+func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest, opts ...resource.UnmarshalOptions) (*resource.Composite, error) {
 	xr := &resource.Composite{
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetObserved().GetComposite().GetConnectionDetails(),
@@ -55,12 +55,12 @@ func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Co
 		xr.ConnectionDetails = make(resource.ConnectionDetails)
 	}
 
-	err := resource.AsObject(req.GetObserved().GetComposite().GetResource(), xr.Resource)
+	err := resource.AsObject(req.GetObserved().GetComposite().GetResource(), xr.Resource, opts...)
 	return xr, err
 }
 
 // GetObservedComposedResources from the supplied request.
-func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]resource.ObservedComposed, error) {
+func GetObservedComposedResources(req *v1beta1.RunFunctionRequest, opts ...resource.UnmarshalOptions) (map[resource.Name]resource.ObservedComposed, error) {
 	ocds := map[resource.Name]resource.ObservedComposed{}
 	for name, r := range req.GetObserved().GetResources() {
 		ocd := resource.ObservedComposed{Resource: composed.New(), ConnectionDetails: r.GetConnectionDetails()}
@@ -69,7 +69,7 @@ func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource
 			ocd.ConnectionDetails = make(resource.ConnectionDetails)
 		}
 
-		if err := resource.AsObject(r.GetResource(), ocd.Resource); err != nil {
+		if err := resource.AsObject(r.GetResource(), ocd.Resource, opts...); err != nil {
 			return nil, err
 		}
 		ocds[resource.Name(name)] = ocd
@@ -78,7 +78,7 @@ func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource
 }
 
 // GetDesiredCompositeResource from the supplied request.
-func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Composite, error) {
+func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest, opts ...resource.UnmarshalOptions) (*resource.Composite, error) {
 	xr := &resource.Composite{
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetDesired().GetComposite().GetConnectionDetails(),
@@ -88,16 +88,16 @@ func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Com
 		xr.ConnectionDetails = make(resource.ConnectionDetails)
 	}
 
-	err := resource.AsObject(req.GetDesired().GetComposite().GetResource(), xr.Resource)
+	err := resource.AsObject(req.GetDesired().GetComposite().GetResource(), xr.Resource, opts...)
 	return xr, err
 }
 
 // GetDesiredComposedResources from the supplied request.
-func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]*resource.DesiredComposed, error) {
+func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest, opts ...resource.UnmarshalOptions) (map[resource.Name]*resource.DesiredComposed, error) {
 	dcds := map[resource.Name]*resource.DesiredComposed{}
 	for name, r := range req.GetDesired().GetResources() {
 		dcd := &resource.DesiredComposed{Resource: composed.New()}
-		if err := resource.AsObject(r.GetResource(), dcd.Resource); err != nil {
+		if err := resource.AsObject(r.GetResource(), dcd.Resource, opts...); err != nil {
 			return nil, err
 		}
 		switch r.GetReady() {
@@ -114,13 +114,13 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 }
 
 // GetExtraResources from the supplied request.
-func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.Extra, error) {
+func GetExtraResources(req *v1beta1.RunFunctionRequest, opts ...resource.UnmarshalOptions) (map[string][]resource.Extra, error) {
 	out := make(map[string][]resource.Extra, len(req.GetExtraResources()))
 	for name, ers := range req.GetExtraResources() {
 		out[name] = []resource.Extra{}
 		for _, i := range ers.GetItems() {
 			r := &resource.Extra{Resource: &unstructured.Unstructured{}}
-			if err := resource.AsObject(i.GetResource(), r.Resource); err != nil {
+			if err := resource.AsObject(i.GetResource(), r.Resource, opts...); err != nil {
 				return nil, err
 			}
 			out[name] = append(out[name], *r)

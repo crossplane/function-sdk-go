@@ -78,8 +78,29 @@ type ObservedComposed struct {
 	ConnectionDetails ConnectionDetails
 }
 
+// UnmarshalOptions are options for unmarshalling a Kubernetes object from a
+// protobuf representation.
+type UnmarshalOptions string
+
+const (
+	// RejectUnknownMembers causes unmarshalling to fail if the protobuf
+	// representation contains fields that are not present in the Kubernetes
+	// object.
+	RejectUnknownMembers = iota
+)
+
+func toJsonOptions(opts []UnmarshalOptions) (jo []json.Options) {
+	for o := range opts {
+		switch o {
+		case RejectUnknownMembers:
+			jo = append(jo, json.RejectUnknownMembers(true))
+		}
+	}
+	return jo
+}
+
 // AsObject gets the supplied Kubernetes object from the supplied struct.
-func AsObject(s *structpb.Struct, o runtime.Object) error {
+func AsObject(s *structpb.Struct, o runtime.Object, opts ...UnmarshalOptions) error {
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
 	// Any type that is or embeds *unstructured.Unstructured has this method.
 	if u, ok := o.(interface{ SetUnstructuredContent(map[string]any) }); ok {
@@ -91,7 +112,7 @@ func AsObject(s *structpb.Struct, o runtime.Object) error {
 	if err != nil {
 		return errors.Wrapf(err, "cannot marshal %T to JSON", s)
 	}
-	return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
+	return errors.Wrapf(json.Unmarshal(b, o, toJsonOptions(opts)...), "cannot unmarshal JSON from %T into %T", s, o)
 }
 
 // AsStruct gets the supplied struct from the supplied Kubernetes object.
