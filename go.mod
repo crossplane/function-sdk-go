@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/bufbuild/buf v1.29.0
 	github.com/crossplane/crossplane-runtime v1.15.0-rc.0.0.20231215091746-d23a82b3a2f5
-	github.com/go-json-experiment/json v0.0.0-20231013223334-54c864be5b8d
+	github.com/go-json-experiment/json v0.0.0-20231102232822-2e55bd4e08b0
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
