@@ -91,7 +91,7 @@ func AsObject(s *structpb.Struct, o runtime.Object) error {
 	if err != nil {
 		return errors.Wrapf(err, "cannot marshal %T to JSON", s)
 	}
-	return errors.Wrapf(json.Unmarshal(b, o), "cannot unmarshal JSON from %T into %T", s, o)
+	return errors.Wrapf(json.Unmarshal(b, o, json.RejectUnknownMembers(true)), "cannot unmarshal JSON from %T into %T", s, o)
 }
 
 // AsStruct gets the supplied struct from the supplied Kubernetes object.
