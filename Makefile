@@ -24,7 +24,7 @@ NPROCS ?= 1
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
-GO_SUBDIRS += proto
+GO_SUBDIRS += errors proto resource response request
 GO111MODULE = on
 GOLANGCILINT_VERSION = 1.55.2
 GO_LINT_ARGS ?= "--fix"
