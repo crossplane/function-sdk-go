@@ -108,6 +108,8 @@ func ExampleFrom() {
 	// spec:
 	//   forProvider:
 	//     region: us-east-2
+	// status:
+	//   observedGeneration: 0
 }
 
 func TestFrom(t *testing.T) {
@@ -151,6 +153,9 @@ func TestFrom(t *testing.T) {
 							"region": "us-east-2",
 						},
 					},
+					"status": map[string]any{
+						"observedGeneration": float64(0),
+					},
 				}}},
 			},
 		},
@@ -173,6 +178,9 @@ func TestFrom(t *testing.T) {
 						"forProvider": map[string]any{
 							"region": "us-east-2",
 						},
+					},
+					"status": map[string]any{
+						"observedGeneration": float64(0),
 					},
 				}}},
 			},

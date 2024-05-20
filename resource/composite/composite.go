@@ -350,3 +350,18 @@ func (xr *Unstructured) SetBool(path string, value bool) error {
 func (xr *Unstructured) SetInteger(path string, value int64) error {
 	return xr.SetValue(path, value)
 }
+
+// SetObservedGeneration of this composite resource claim.
+func (xr *Unstructured) SetObservedGeneration(generation int64) {
+	status := &xpv1.ObservedStatus{}
+	_ = fieldpath.Pave(xr.Object).GetValueInto("status", status)
+	status.SetObservedGeneration(generation)
+	_ = fieldpath.Pave(xr.Object).SetValue("status.observedGeneration", status.ObservedGeneration)
+}
+
+// GetObservedGeneration of this composite resource claim.
+func (xr *Unstructured) GetObservedGeneration() int64 {
+	status := &xpv1.ObservedStatus{}
+	_ = fieldpath.Pave(xr.Object).GetValueInto("status", status)
+	return status.GetObservedGeneration()
+}
