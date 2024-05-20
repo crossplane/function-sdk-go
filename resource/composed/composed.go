@@ -286,16 +286,16 @@ func (cd *Unstructured) SetInteger(path string, value int64) error {
 }
 
 // SetObservedGeneration of this composite resource claim.
-func (cr *Unstructured) SetObservedGeneration(generation int64) {
+func (cd *Unstructured) SetObservedGeneration(generation int64) {
 	status := &xpv1.ObservedStatus{}
-	_ = fieldpath.Pave(cr.Object).GetValueInto("status", status)
+	_ = fieldpath.Pave(cd.Object).GetValueInto("status", status)
 	status.SetObservedGeneration(generation)
-	_ = fieldpath.Pave(cr.Object).SetValue("status.observedGeneration", status.ObservedGeneration)
+	_ = fieldpath.Pave(cd.Object).SetValue("status.observedGeneration", status.ObservedGeneration)
 }
 
 // GetObservedGeneration of this composite resource claim.
-func (cr *Unstructured) GetObservedGeneration() int64 {
+func (cd *Unstructured) GetObservedGeneration() int64 {
 	status := &xpv1.ObservedStatus{}
-	_ = fieldpath.Pave(cr.Object).GetValueInto("status", status)
+	_ = fieldpath.Pave(cd.Object).GetValueInto("status", status)
 	return status.GetObservedGeneration()
 }
