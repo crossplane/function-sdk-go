@@ -128,3 +128,19 @@ func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.E
 	}
 	return out, nil
 }
+
+func GetCredentials(req *v1beta1.RunFunctionRequest) (map[string]resource.Credential, error) {
+	out := make(map[string]resource.Credential, len(req.GetCredentials()))
+	for name, cred := range req.GetCredentials() {
+		data := cred.GetCredentialData().GetData()
+		interfaceMap := make(map[string]interface{}, len(data))
+		for k, v := range data {
+			interfaceMap[k] = v
+		}
+		credential := resource.Credential{
+			Data: &unstructured.Unstructured{Object: interfaceMap},
+		}
+		out[name] = credential
+	}
+	return out, nil
+}
