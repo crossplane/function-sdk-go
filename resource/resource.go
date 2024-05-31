@@ -59,7 +59,7 @@ type Extra struct {
 
 // Credential is a secret requested by a Function
 type Credential struct {
-	Data *unstructured.Unstructured
+	Data map[string][]byte
 }
 
 // Ready indicates whether a composed resource should be considered ready.

@@ -138,15 +138,7 @@ func GetCredential(req *v1beta1.RunFunctionRequest, name string) (resource.Crede
 
 	switch cred.GetSource().(type) {
 	case *v1beta1.Credentials_CredentialData:
-		data := cred.GetCredentialData().GetData()
-		interfaceMap := make(map[string]interface{}, len(data))
-		for k, v := range data {
-			interfaceMap[k] = v
-		}
-		credential := resource.Credential{
-			Data: &unstructured.Unstructured{Object: interfaceMap},
-		}
-		return credential, nil
+		return resource.Credential{Data: cred.GetCredentialData().GetData()}, nil
 	default:
 		sourceType := reflect.TypeOf(cred.GetSource()).String()
 		return resource.Credential{}, errors.Errorf("%s: not a supported credential source", sourceType)
