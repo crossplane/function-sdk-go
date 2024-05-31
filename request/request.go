@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"reflect"
 
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
@@ -129,9 +130,14 @@ func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.E
 	return out, nil
 }
 
-func GetCredentials(req *v1beta1.RunFunctionRequest) (map[string]resource.Credential, error) {
-	out := make(map[string]resource.Credential, len(req.GetCredentials()))
-	for name, cred := range req.GetCredentials() {
+func GetCredential(req *v1beta1.RunFunctionRequest, name string) (resource.Credential, error) {
+	cred, exists := req.GetCredentials()[name]
+	if !exists {
+		return resource.Credential{}, errors.Errorf("%s: credential not found", name)
+	}
+
+	switch cred.GetSource().(type) {
+	case *v1beta1.Credentials_CredentialData:
 		data := cred.GetCredentialData().GetData()
 		interfaceMap := make(map[string]interface{}, len(data))
 		for k, v := range data {
@@ -140,7 +146,9 @@ func GetCredentials(req *v1beta1.RunFunctionRequest) (map[string]resource.Creden
 		credential := resource.Credential{
 			Data: &unstructured.Unstructured{Object: interfaceMap},
 		}
-		out[name] = credential
+		return credential, nil
+	default:
+		sourceType := reflect.TypeOf(cred.GetSource()).String()
+		return resource.Credential{}, errors.Errorf("%s: not a supported credential source", sourceType)
 	}
-	return out, nil
 }
