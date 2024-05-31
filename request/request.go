@@ -18,10 +18,11 @@ limitations under the License.
 package request
 
 import (
+	"reflect"
+
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
 
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
@@ -130,6 +131,7 @@ func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.E
 	return out, nil
 }
 
+// GetCredential from the supplied request.
 func GetCredential(req *v1beta1.RunFunctionRequest, name string) (resource.Credential, error) {
 	cred, exists := req.GetCredentials()[name]
 	if !exists {
