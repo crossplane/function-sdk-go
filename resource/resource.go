@@ -57,8 +57,17 @@ type Extra struct {
 	Resource *unstructured.Unstructured
 }
 
+// CredentialsType is the type of credentials
+type CredentialsType string
+
+const (
+	// CredentialsTypeData is a Credential which of type Data
+	CredentialsTypeData = "Data"
+)
+
 // Credential is a secret requested by a Function
 type Credential struct {
+	Type CredentialsType
 	Data map[string][]byte
 }
 

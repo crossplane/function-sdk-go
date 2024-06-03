@@ -138,7 +138,7 @@ func GetCredential(req *v1beta1.RunFunctionRequest, name string) (resource.Crede
 
 	switch t := cred.GetSource().(type) {
 	case *v1beta1.Credentials_CredentialData:
-		return resource.Credential{Data: cred.GetCredentialData().GetData()}, nil
+		return resource.Credential{Type: resource.CredentialsTypeData, Data: cred.GetCredentialData().GetData()}, nil
 	default:
 		return resource.Credential{}, errors.Errorf("%s: not a supported credential source", t)
 	}
