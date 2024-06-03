@@ -18,8 +18,6 @@ limitations under the License.
 package request
 
 import (
-	"reflect"
-
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -138,11 +136,10 @@ func GetCredential(req *v1beta1.RunFunctionRequest, name string) (resource.Crede
 		return resource.Credential{}, errors.Errorf("%s: credential not found", name)
 	}
 
-	switch cred.GetSource().(type) {
+	switch t := cred.GetSource().(type) {
 	case *v1beta1.Credentials_CredentialData:
 		return resource.Credential{Data: cred.GetCredentialData().GetData()}, nil
 	default:
-		sourceType := reflect.TypeOf(cred.GetSource()).String()
-		return resource.Credential{}, errors.Errorf("%s: not a supported credential source", sourceType)
+		return resource.Credential{}, errors.Errorf("%s: not a supported credential source", t)
 	}
 }
