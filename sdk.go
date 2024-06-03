@@ -144,6 +144,6 @@ func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 }
 
 // NewLogger returns a new logger.
-func NewLogger(debug bool) (logging.Logger, error) {
+func NewLogger(debug bool) (logging.FnLogger, error) {
 	return logging.NewLogger(debug)
 }

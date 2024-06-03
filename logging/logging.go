@@ -15,9 +15,6 @@ limitations under the License.
 */
 
 // Package logging provides function's recommended logging interface.
-//
-// Mainly a proxy for github.com/crossplane/crossplane-runtime/pkg/logging at
-// the moment, but could diverge in the future if we see it fit.
 package logging
 
 import (
@@ -25,26 +22,75 @@ import (
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
-
 	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // A Logger logs messages. Messages may be supplemented by structured data.
-type Logger logging.Logger
+type FnLogger interface {
+	// Info logs a message with optional structured data. Structured data must
+	// be supplied as an array that alternates between string keys and values of
+	// an arbitrary type. Use Info for messages that Crossplane operators are
+	// very likely to be concerned with when running Crossplane.
+	Info(msg string, keysAndValues ...any)
+
+	// Debug logs a message with optional structured data. Structured data must
+	// be supplied as an array that alternates between string keys and values of
+	// an arbitrary type. Use Debug for messages that Crossplane operators or
+	// developers may be concerned with when debugging Crossplane.
+	Debug(msg string, keysAndValues ...any)
+
+	// WithValues returns a Logger that will include the supplied structured
+	// data with any subsequent messages it logs. Structured data must
+	// be supplied as an array that alternates between string keys and values of
+	// an arbitrary type.
+	WithValues(keysAndValues ...any) FnLogger
+
+	// Error logs a message with optional structured data. Structured data must
+	// be supplied as an array that alternates between string keys and values of
+	// an arbitrary type.
+	// Use Error when logging fatal results of a function.
+	Error(err error, msg string, keysAndValues ...any)
+}
 
 // NewNopLogger returns a Logger that does nothing.
-func NewNopLogger() Logger { return logging.NewNopLogger() }
+func NewNopLogger() FnLogger { return nopFnLogger{} }
+
+type nopFnLogger struct{}
+
+func (l nopFnLogger) Info(_ string, _ ...any)           {}
+func (l nopFnLogger) Debug(_ string, _ ...any)          {}
+func (l nopFnLogger) Error(_ error, _ string, _ ...any) {}
+func (l nopFnLogger) WithValues(_ ...any) FnLogger      { return nopFnLogger{} }
 
 // NewLogrLogger returns a Logger that is satisfied by the supplied logr.Logger,
 // which may be satisfied in turn by various logging implementations (Zap, klog,
 // etc). Debug messages are logged at V(1).
-func NewLogrLogger(l logr.Logger) Logger {
-	return logging.NewLogrLogger(l)
+func NewLogrLogger(l logr.Logger) FnLogger {
+	return logrLogger{log: l}
+}
+
+type logrLogger struct {
+	log logr.Logger
+}
+
+func (l logrLogger) Info(msg string, keysAndValues ...any) {
+	l.log.Info(msg, keysAndValues...) //nolint:logrlint // False positive - logrlint thinks there's an odd number of args.
+}
+
+func (l logrLogger) Debug(msg string, keysAndValues ...any) {
+	l.log.V(1).Info(msg, keysAndValues...) //nolint:logrlint // False positive - logrlint thinks there's an odd number of args.
+}
+
+func (l logrLogger) Error(err error, msg string, keysAndValues ...any) {
+	l.log.Error(err, msg, keysAndValues...) //nolint:logrlint // False positive - logrlint thinks there's an odd number of args.
+}
+
+func (l logrLogger) WithValues(keysAndValues ...any) FnLogger {
+	return logrLogger{log: l.log.WithValues(keysAndValues...)} //nolint:logrlint // False positive - logrlint thinks there's an odd number of args.
 }
 
 // NewLogger returns a new logger.
-func NewLogger(debug bool) (logging.Logger, error) {
+func NewLogger(debug bool) (FnLogger, error) {
 	o := []zap.Option{zap.AddCallerSkip(1)}
 	if debug {
 		zl, err := zap.NewDevelopment(o...)
