@@ -60,11 +60,11 @@ func NewLogger(debug, timeEncodeISO8601 bool, addCallerSkip ...int) (Logger, err
 
 	// If timeEncodeISO8601 is true, use ISO8601TimeEncoder for production logger.
 	if timeEncodeISO8601 {
-		pCfg := zap.NewProductionEncoderConfig()
-		pCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+		ec := zap.NewProductionEncoderConfig()
+		ec.EncodeTime = zapcore.ISO8601TimeEncoder
 
 		p := zap.NewProductionConfig()
-		p.EncoderConfig = pCfg
+		p.EncoderConfig = ec
 		zl, err := p.Build(o...)
 		return NewLogrLogger(zapr.NewLogger(zl)), errors.Wrap(err, "cannot create production zap logger")
 	}
