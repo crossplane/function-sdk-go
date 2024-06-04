@@ -27,6 +27,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
+
 	"github.com/crossplane/function-sdk-go/errors"
 )
 
