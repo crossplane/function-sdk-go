@@ -57,17 +57,21 @@ type Extra struct {
 	Resource *unstructured.Unstructured
 }
 
-// CredentialsType is the type of credentials
+// CredentialsType is the type of credentials.
 type CredentialsType string
 
 const (
-	// CredentialsTypeData is a Credential which of type Data
+	// CredentialsTypeData is a Credential of type Data.
 	CredentialsTypeData = "Data"
 )
 
-// Credential is a secret requested by a Function
-type Credential struct {
+// Credentials is a secret requested by a Function.
+type Credentials struct {
+	// Type represents the type of credentials.
 	Type CredentialsType
+
+	// Data is a map of key-value pairs where the keys are strings, and the values are byte slices
+	// containing sensitive data.
 	Data map[string][]byte
 }
 
