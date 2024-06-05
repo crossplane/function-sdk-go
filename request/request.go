@@ -128,3 +128,18 @@ func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.E
 	}
 	return out, nil
 }
+
+// GetCredentials from the supplied request.
+func GetCredentials(req *v1beta1.RunFunctionRequest, name string) (resource.Credentials, error) {
+	cred, exists := req.GetCredentials()[name]
+	if !exists {
+		return resource.Credentials{}, errors.Errorf("%s: credential not found", name)
+	}
+
+	switch t := cred.GetSource().(type) {
+	case *v1beta1.Credentials_CredentialData:
+		return resource.Credentials{Type: resource.CredentialsTypeData, Data: cred.GetCredentialData().GetData()}, nil
+	default:
+		return resource.Credentials{}, errors.Errorf("%s: not a supported credential source", t)
+	}
+}
