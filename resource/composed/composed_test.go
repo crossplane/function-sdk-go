@@ -17,6 +17,7 @@ limitations under the License.
 package composed
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -200,4 +201,168 @@ func TestFrom(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleTo() {
+	// Add all v1beta2 types to the scheme so that From can automatically
+	// determine their apiVersion and kind.
+	v1beta2.AddToScheme(Scheme)
+
+	// Create a unstructured object as we would receive by the function (observed/desired).
+	ub := &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": v1beta2.CRDGroupVersion.String(),
+		"kind":       v1beta2.Bucket_Kind,
+		"metadata": map[string]any{
+			"name": "cool-bucket",
+		},
+		"spec": map[string]any{
+			"forProvider": map[string]any{
+				"region": "us-east-2",
+			},
+		},
+		"status": map[string]any{
+			"observedGeneration": float64(0),
+		},
+	}}}
+
+	// Create a strongly typed object from the unstructured object.
+	sb := &v1beta2.Bucket{}
+	err := To(ub, sb)
+	if err != nil {
+		panic(err)
+	}
+	// Now you have a strongly typed Bucket object.
+	objectLock := true
+	sb.Spec.ForProvider.ObjectLockEnabled = &objectLock
+}
+
+// Test the To function
+func TestTo(t *testing.T) {
+	v1beta2.AddToScheme(Scheme)
+	type args struct {
+		un  *Unstructured
+		obj interface{}
+	}
+	type want struct {
+		obj interface{}
+		err error
+	}
+
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   want
+	}{
+		"SuccessfulConversion": {
+			reason: "A valid unstructured object should convert to a structured object without errors",
+			args: args{
+				un: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": v1beta2.CRDGroupVersion.String(),
+					"kind":       v1beta2.Bucket_Kind,
+					"metadata": map[string]any{
+						"name": "cool-bucket",
+					},
+					"spec": map[string]any{
+						"forProvider": map[string]any{
+							"region": "us-east-2",
+						},
+					},
+					"status": map[string]any{
+						"observedGeneration": float64(0),
+					},
+				}}},
+				obj: &v1beta2.Bucket{},
+			},
+			want: want{
+				obj: &v1beta2.Bucket{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       v1beta2.Bucket_Kind,
+						APIVersion: v1beta2.CRDGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cool-bucket",
+					},
+					Spec: v1beta2.BucketSpec{
+						ForProvider: v1beta2.BucketParameters{
+							Region: ptr.To[string]("us-east-2"),
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"InvalidGVK": {
+			reason: "An unstructured object with mismatched GVK should result in an error",
+			args: args{
+				un: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": "test.example.io",
+					"kind":       "Unknown",
+					"metadata": map[string]any{
+						"name": "cool-bucket",
+					},
+					"spec": map[string]any{
+						"forProvider": map[string]any{
+							"region": "us-east-2",
+						},
+					},
+					"status": map[string]any{
+						"observedGeneration": float64(0),
+					},
+				}}},
+				obj: &v1beta2.Bucket{},
+			},
+			want: want{
+				obj: &v1beta2.Bucket{},
+				err: errors.New("GVK /test.example.io, Kind=Unknown is not known by the scheme for the provided object type"),
+			},
+		},
+		"NoRuntimeObject": {
+			reason: "Should only convert to a object if the object is a runtime.Object",
+			args: args{
+				un: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": v1beta1.CRDGroupVersion.String(),
+					"kind":       v1beta1.Bucket_Kind,
+					"metadata": map[string]any{
+						"name": "cool-bucket",
+					},
+				}}},
+				obj: "not-a-runtime-object",
+			},
+			want: want{
+				obj: string("not-a-runtime-object"),
+				err: errors.New("object is not a compatible runtime.Object"),
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := To(tc.args.un, tc.args.obj)
+
+			// Compare the resulting object with the expected one
+			if diff := cmp.Diff(tc.want.obj, tc.args.obj); diff != "" {
+				t.Errorf("\n%s\nTo(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			// Compare the error with the expected error
+			if diff := cmp.Diff(tc.want.err, err, EquateErrors()); diff != "" {
+				t.Errorf("\n%s\nTo(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+// EquateErrors returns true if the supplied errors are of the same type and
+// produce identical strings. This mirrors the error comparison behaviour of
+// https://github.com/go-test/deep,
+//
+// This differs from cmpopts.EquateErrors, which does not test for error strings
+// and instead returns whether one error 'is' (in the errors.Is sense) the
+// other.
+func EquateErrors() cmp.Option {
+	return cmp.Comparer(func(a, b error) bool {
+		if a == nil || b == nil {
+			return a == nil && b == nil
+		}
+		return a.Error() == b.Error()
+	})
 }
