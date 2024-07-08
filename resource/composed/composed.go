@@ -42,6 +42,38 @@ func New() *Unstructured {
 	return &Unstructured{unstructured.Unstructured{Object: make(map[string]any)}}
 }
 
+// To converts a unstructured composed resource to the provided object.
+func To(un *Unstructured, obj interface{}) error {
+	rt, ok := obj.(runtime.Object)
+	if !ok {
+		return errors.New("object is not a compatible runtime.Object")
+	}
+
+	// Get known GVKs for the runtime object type
+	knownGVKs, _, err := Scheme.ObjectKinds(rt)
+	if err != nil {
+		return errors.Errorf("could not retrieve GVKs for the provided object: %v", err)
+	}
+
+	// Check if GVK is known as we should not try to convert it if it doesn't match
+	gvkMatches := false
+	for _, knownGVK := range knownGVKs {
+		if knownGVK == un.GetObjectKind().GroupVersionKind() {
+			gvkMatches = true
+		}
+	}
+
+	if !gvkMatches {
+		return errors.Errorf("GVK %v is not known by the scheme for the provided object type", un.GetObjectKind().GroupVersionKind())
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(un.Object, obj)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // From creates a new unstructured composed resource from the supplied object.
 func From(o runtime.Object) (*Unstructured, error) {
 	// If the supplied object is already unstructured content, avoid a JSON
