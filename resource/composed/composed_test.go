@@ -241,7 +241,7 @@ func TestTo(t *testing.T) {
 	v1beta2.AddToScheme(Scheme)
 	type args struct {
 		un  *Unstructured
-		obj interface{}
+		obj runtime.Object
 	}
 	type want struct {
 		obj interface{}
@@ -314,23 +314,6 @@ func TestTo(t *testing.T) {
 			want: want{
 				obj: &v1beta2.Bucket{},
 				err: errors.New("GVK /test.example.io, Kind=Unknown is not known by the scheme for the provided object type"),
-			},
-		},
-		"NoRuntimeObject": {
-			reason: "Should only convert to a object if the object is a runtime.Object",
-			args: args{
-				un: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": v1beta1.CRDGroupVersion.String(),
-					"kind":       v1beta1.Bucket_Kind,
-					"metadata": map[string]any{
-						"name": "cool-bucket",
-					},
-				}}},
-				obj: "not-a-runtime-object",
-			},
-			want: want{
-				obj: string("not-a-runtime-object"),
-				err: errors.New("object is not a compatible runtime.Object"),
 			},
 		},
 	}
