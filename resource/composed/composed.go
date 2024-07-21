@@ -43,14 +43,10 @@ func New() *Unstructured {
 }
 
 // To converts a unstructured composed resource to the provided object.
-func To(un *Unstructured, obj interface{}) error {
-	rt, ok := obj.(runtime.Object)
-	if !ok {
-		return errors.New("object is not a compatible runtime.Object")
-	}
+func To[T runtime.Object](un *Unstructured, obj T) error {
 
 	// Get known GVKs for the runtime object type
-	knownGVKs, _, err := Scheme.ObjectKinds(rt)
+	knownGVKs, _, err := Scheme.ObjectKinds(obj)
 	if err != nil {
 		return errors.Errorf("could not retrieve GVKs for the provided object: %v", err)
 	}
