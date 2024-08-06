@@ -36,21 +36,23 @@ import (
 
 // Default ServeOptions.
 const (
-	DefaultNetwork = "tcp"
-	DefaultAddress = ":9443"
+	DefaultNetwork        = "tcp"
+	DefaultAddress        = ":9443"
+	DefaultMaxRecvMsgSize = 4096
 )
 
 // ServeOptions configure how a Function is served.
 type ServeOptions struct {
-	Network     string
-	Address     string
-	Credentials credentials.TransportCredentials
+	Network        string
+	Address        string
+	MaxRecvMsgSize int
+	Credentials    credentials.TransportCredentials
 }
 
 // A ServeOption configures how a Function is served.
 type ServeOption func(o *ServeOptions) error
 
-// Listen configures the network and address on which the Function will
+// Listen configures the network, address and maximum message size on which the Function will
 // listen for RunFunctionRequests.
 func Listen(network, address string) ServeOption {
 	return func(o *ServeOptions) error {
@@ -114,12 +116,22 @@ func Insecure(insecure bool) ServeOption {
 	}
 }
 
+// MaxMsgSize returns a ServeOption to set the max message size in bytes the server can receive.
+// If this is not set, gRPC uses the default limit.
+func MaxRecvMessageSize(sz int) ServeOption {
+	return func(o *ServeOptions) error {
+		o.MaxRecvMsgSize = sz
+		return nil
+	}
+}
+
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
 func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	so := &ServeOptions{
-		Network: DefaultNetwork,
-		Address: DefaultAddress,
+		Network:        DefaultNetwork,
+		Address:        DefaultAddress,
+		MaxRecvMsgSize: DefaultMaxRecvMsgSize,
 	}
 
 	for _, fn := range o {
@@ -137,7 +149,7 @@ func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 		return errors.Wrapf(err, "cannot listen for %s connections at address %q", so.Network, so.Address)
 	}
 
-	srv := grpc.NewServer(grpc.Creds(so.Credentials))
+	srv := grpc.NewServer(grpc.MaxRecvMsgSize(so.MaxRecvMsgSize), grpc.Creds(so.Credentials))
 	reflection.Register(srv)
 	v1beta1.RegisterFunctionRunnerServiceServer(srv, fn)
 	return errors.Wrap(srv.Serve(lis), "cannot serve mTLS gRPC connections")
