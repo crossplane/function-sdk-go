@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/upbound/provider-aws v0.47.1
+	github.com/upbound/provider-aws v0.47.4
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.62.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
@@ -32,7 +32,7 @@ require (
 	github.com/antchfx/htmlquery v1.2.4 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
-	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bufbuild/protocompile v0.9.0 // indirect
@@ -41,7 +41,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
-	github.com/crossplane/upjet v1.1.0-rc.0.0.20231227120826-4cb45f9104ac // indirect
+	github.com/crossplane/upjet v1.1.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/cli v25.0.4+incompatible // indirect
@@ -73,18 +73,17 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20240227163752-401108e1b7e7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.17.0 // indirect
+	github.com/hashicorp/hcl/v2 v2.19.1 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
-	github.com/hashicorp/terraform-json v0.17.0 // indirect
-	github.com/hashicorp/terraform-plugin-go v0.16.0 // indirect
+	github.com/hashicorp/terraform-json v0.17.1 // indirect
+	github.com/hashicorp/terraform-plugin-framework v1.4.1 // indirect
+	github.com/hashicorp/terraform-plugin-go v0.19.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.9.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.30.0 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
@@ -129,7 +128,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
-	github.com/zclconf/go-cty v1.13.2 // indirect
+	github.com/zclconf/go-cty v1.14.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
