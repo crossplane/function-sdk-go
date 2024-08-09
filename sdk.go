@@ -116,7 +116,7 @@ func Insecure(insecure bool) ServeOption {
 	}
 }
 
-// MaxMsgSize returns a ServeOption to set the max message size in bytes the server can receive.
+// MaxRecvMessageSize returns a ServeOption to set the max message size in bytes the server can receive.
 // If this is not set, gRPC uses the default limit.
 func MaxRecvMessageSize(sz int) ServeOption {
 	return func(o *ServeOptions) error {
