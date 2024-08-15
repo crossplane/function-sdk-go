@@ -17,41 +17,41 @@ limitations under the License.
 package response
 
 import (
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 )
 
 // ConditionOption allows further customization of the condition.
 type ConditionOption struct {
-	condition *v1beta1.Condition
+	condition *v1.Condition
 }
 
 // ConditionTrue will create a condition with the status of true and add the
 // condition to the supplied RunFunctionResponse.
-func ConditionTrue(rsp *v1beta1.RunFunctionResponse, typ, reason string) *ConditionOption {
-	return newCondition(rsp, typ, reason, v1beta1.Status_STATUS_CONDITION_TRUE)
+func ConditionTrue(rsp *v1.RunFunctionResponse, typ, reason string) *ConditionOption {
+	return newCondition(rsp, typ, reason, v1.Status_STATUS_CONDITION_TRUE)
 }
 
 // ConditionFalse will create a condition with the status of false and add the
 // condition to the supplied RunFunctionResponse.
-func ConditionFalse(rsp *v1beta1.RunFunctionResponse, typ, reason string) *ConditionOption {
-	return newCondition(rsp, typ, reason, v1beta1.Status_STATUS_CONDITION_FALSE)
+func ConditionFalse(rsp *v1.RunFunctionResponse, typ, reason string) *ConditionOption {
+	return newCondition(rsp, typ, reason, v1.Status_STATUS_CONDITION_FALSE)
 }
 
 // ConditionUnknown will create a condition with the status of unknown and add
 // the condition to the supplied RunFunctionResponse.
-func ConditionUnknown(rsp *v1beta1.RunFunctionResponse, typ, reason string) *ConditionOption {
-	return newCondition(rsp, typ, reason, v1beta1.Status_STATUS_CONDITION_UNKNOWN)
+func ConditionUnknown(rsp *v1.RunFunctionResponse, typ, reason string) *ConditionOption {
+	return newCondition(rsp, typ, reason, v1.Status_STATUS_CONDITION_UNKNOWN)
 }
 
-func newCondition(rsp *v1beta1.RunFunctionResponse, typ, reason string, s v1beta1.Status) *ConditionOption {
+func newCondition(rsp *v1.RunFunctionResponse, typ, reason string, s v1.Status) *ConditionOption {
 	if rsp.GetConditions() == nil {
-		rsp.Conditions = make([]*v1beta1.Condition, 0, 1)
+		rsp.Conditions = make([]*v1.Condition, 0, 1)
 	}
-	c := &v1beta1.Condition{
+	c := &v1.Condition{
 		Type:   typ,
 		Status: s,
 		Reason: reason,
-		Target: v1beta1.Target_TARGET_COMPOSITE.Enum(),
+		Target: v1.Target_TARGET_COMPOSITE.Enum(),
 	}
 	rsp.Conditions = append(rsp.GetConditions(), c)
 	return &ConditionOption{condition: c}
@@ -59,14 +59,14 @@ func newCondition(rsp *v1beta1.RunFunctionResponse, typ, reason string, s v1beta
 
 // TargetComposite updates the condition to target the composite resource.
 func (c *ConditionOption) TargetComposite() *ConditionOption {
-	c.condition.Target = v1beta1.Target_TARGET_COMPOSITE.Enum()
+	c.condition.Target = v1.Target_TARGET_COMPOSITE.Enum()
 	return c
 }
 
 // TargetCompositeAndClaim updates the condition to target both the composite
 // resource and claim.
 func (c *ConditionOption) TargetCompositeAndClaim() *ConditionOption {
-	c.condition.Target = v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum()
+	c.condition.Target = v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum()
 	return c
 }
 

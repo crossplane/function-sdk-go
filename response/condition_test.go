@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"k8s.io/utils/ptr"
 
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/response"
 )
 
@@ -41,12 +41,12 @@ const (
 )
 
 func TestCondition(t *testing.T) {
-	type testFn func(*v1beta1.RunFunctionResponse)
+	type testFn func(*v1.RunFunctionResponse)
 	type args struct {
 		fns []testFn
 	}
 	type want struct {
-		conditions []*v1beta1.Condition
+		conditions []*v1.Condition
 	}
 	cases := map[string]struct {
 		reason string
@@ -57,36 +57,36 @@ func TestCondition(t *testing.T) {
 			reason: "Correctly adds conditions to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable)
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionFalse(rsp, typeDatabaseReady, reasonCreating)
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionUnknown(rsp, typeDatabaseReady, reasonPriorFailure)
 					},
 				},
 			},
 			want: want{
-				conditions: []*v1beta1.Condition{
+				conditions: []*v1.Condition{
 					{
 						Type:   typeDatabaseReady,
-						Status: v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status: v1.Status_STATUS_CONDITION_TRUE,
 						Reason: reasonAvailable,
-						Target: v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target: v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
 						Type:   typeDatabaseReady,
-						Status: v1beta1.Status_STATUS_CONDITION_FALSE,
+						Status: v1.Status_STATUS_CONDITION_FALSE,
 						Reason: reasonCreating,
-						Target: v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target: v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
 						Type:   typeDatabaseReady,
-						Status: v1beta1.Status_STATUS_CONDITION_UNKNOWN,
+						Status: v1.Status_STATUS_CONDITION_UNKNOWN,
 						Reason: reasonPriorFailure,
-						Target: v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target: v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 				},
 			},
@@ -95,27 +95,27 @@ func TestCondition(t *testing.T) {
 			reason: "Correctly sets targets on condition and adds it to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable).TargetComposite()
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable).TargetCompositeAndClaim()
 					},
 				},
 			},
 			want: want{
-				conditions: []*v1beta1.Condition{
+				conditions: []*v1.Condition{
 					{
 						Type:   typeDatabaseReady,
-						Status: v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status: v1.Status_STATUS_CONDITION_TRUE,
 						Reason: reasonAvailable,
-						Target: v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target: v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
 						Type:   typeDatabaseReady,
-						Status: v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status: v1.Status_STATUS_CONDITION_TRUE,
 						Reason: reasonAvailable,
-						Target: v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target: v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 					},
 				},
 			},
@@ -124,18 +124,18 @@ func TestCondition(t *testing.T) {
 			reason: "Correctly sets message on condition and adds it to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable).WithMessage("a test message")
 					},
 				},
 			},
 			want: want{
-				conditions: []*v1beta1.Condition{
+				conditions: []*v1.Condition{
 					{
 						Type:    typeDatabaseReady,
-						Status:  v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
-						Target:  v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:  v1.Target_TARGET_COMPOSITE.Enum(),
 						Message: ptr.To("a test message"),
 					},
 				},
@@ -145,12 +145,12 @@ func TestCondition(t *testing.T) {
 			reason: "Can chain condition options together.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable).
 							WithMessage("a test message").
 							TargetCompositeAndClaim()
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.ConditionTrue(rsp, typeDatabaseReady, reasonAvailable).
 							TargetCompositeAndClaim().
 							WithMessage("a test message")
@@ -158,19 +158,19 @@ func TestCondition(t *testing.T) {
 				},
 			},
 			want: want{
-				conditions: []*v1beta1.Condition{
+				conditions: []*v1.Condition{
 					{
 						Type:    typeDatabaseReady,
-						Status:  v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
-						Target:  v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target:  v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 						Message: ptr.To("a test message"),
 					},
 					{
 						Type:    typeDatabaseReady,
-						Status:  v1beta1.Status_STATUS_CONDITION_TRUE,
+						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
-						Target:  v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target:  v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 						Message: ptr.To("a test message"),
 					},
 				},
@@ -179,7 +179,7 @@ func TestCondition(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			rsp := &v1beta1.RunFunctionResponse{}
+			rsp := &v1.RunFunctionResponse{}
 			for _, f := range tc.args.fns {
 				f(rsp)
 			}

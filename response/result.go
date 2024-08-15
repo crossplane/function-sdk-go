@@ -20,48 +20,48 @@ package response
 import (
 	"fmt"
 
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 )
 
 // ResultOption allows further customization of the result.
 type ResultOption struct {
-	result *v1beta1.Result
+	result *v1.Result
 }
 
 // Fatal adds a fatal result to the supplied RunFunctionResponse.
 // An event will be created for the Composite Resource.
 // A fatal result cannot target the claim.
-func Fatal(rsp *v1beta1.RunFunctionResponse, err error) {
-	newResult(rsp, v1beta1.Severity_SEVERITY_FATAL, err.Error())
+func Fatal(rsp *v1.RunFunctionResponse, err error) {
+	newResult(rsp, v1.Severity_SEVERITY_FATAL, err.Error())
 }
 
 // Warning adds a warning result to the supplied RunFunctionResponse.
 // An event will be created for the Composite Resource.
-func Warning(rsp *v1beta1.RunFunctionResponse, err error) *ResultOption {
-	return newResult(rsp, v1beta1.Severity_SEVERITY_WARNING, err.Error())
+func Warning(rsp *v1.RunFunctionResponse, err error) *ResultOption {
+	return newResult(rsp, v1.Severity_SEVERITY_WARNING, err.Error())
 }
 
 // Normal adds a normal result to the supplied RunFunctionResponse.
 // An event will be created for the Composite Resource.
-func Normal(rsp *v1beta1.RunFunctionResponse, message string) *ResultOption {
-	return newResult(rsp, v1beta1.Severity_SEVERITY_NORMAL, message)
+func Normal(rsp *v1.RunFunctionResponse, message string) *ResultOption {
+	return newResult(rsp, v1.Severity_SEVERITY_NORMAL, message)
 }
 
 // Normalf adds a normal result to the supplied RunFunctionResponse.
 // An event will be created for the Composite Resource.
-func Normalf(rsp *v1beta1.RunFunctionResponse, format string, a ...any) *ResultOption {
+func Normalf(rsp *v1.RunFunctionResponse, format string, a ...any) *ResultOption {
 	return Normal(rsp, fmt.Sprintf(format, a...))
 }
 
-func newResult(rsp *v1beta1.RunFunctionResponse, s v1beta1.Severity, message string) *ResultOption {
+func newResult(rsp *v1.RunFunctionResponse, s v1.Severity, message string) *ResultOption {
 	if rsp.GetResults() == nil {
-		rsp.Results = make([]*v1beta1.Result, 0, 1)
+		rsp.Results = make([]*v1.Result, 0, 1)
 	}
 
-	r := &v1beta1.Result{
+	r := &v1.Result{
 		Severity: s,
 		Message:  message,
-		Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+		Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 	}
 	rsp.Results = append(rsp.GetResults(), r)
 
@@ -71,14 +71,14 @@ func newResult(rsp *v1beta1.RunFunctionResponse, s v1beta1.Severity, message str
 // TargetComposite updates the result and its event to target the composite
 // resource.
 func (o *ResultOption) TargetComposite() *ResultOption {
-	o.result.Target = v1beta1.Target_TARGET_COMPOSITE.Enum()
+	o.result.Target = v1.Target_TARGET_COMPOSITE.Enum()
 	return o
 }
 
 // TargetCompositeAndClaim updates the result and its event to target both the
 // composite resource and claim.
 func (o *ResultOption) TargetCompositeAndClaim() *ResultOption {
-	o.result.Target = v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum()
+	o.result.Target = v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum()
 	return o
 }
 

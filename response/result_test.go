@@ -24,17 +24,17 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"k8s.io/utils/ptr"
 
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/response"
 )
 
 func TestResult(t *testing.T) {
-	type testFn func(*v1beta1.RunFunctionResponse)
+	type testFn func(*v1.RunFunctionResponse)
 	type args struct {
 		fns []testFn
 	}
 	type want struct {
-		results []*v1beta1.Result
+		results []*v1.Result
 	}
 	cases := map[string]struct {
 		reason string
@@ -45,41 +45,41 @@ func TestResult(t *testing.T) {
 			reason: "Correctly adds results to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Normal(rsp, "this is a test normal result")
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Normalf(rsp, "this is a test normal %s result", "formatted")
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Warning(rsp, errors.New("this is a test warning result"))
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Fatal(rsp, errors.New("this is a test fatal result"))
 					},
 				},
 			},
 			want: want{
-				results: []*v1beta1.Result{
+				results: []*v1.Result{
 					{
-						Severity: v1beta1.Severity_SEVERITY_NORMAL,
+						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal result",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_NORMAL,
+						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal formatted result",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_WARNING,
+						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_FATAL,
+						Severity: v1.Severity_SEVERITY_FATAL,
 						Message:  "this is a test fatal result",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 				},
 			},
@@ -88,25 +88,25 @@ func TestResult(t *testing.T) {
 			reason: "Correctly sets targets on result and adds it to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Warning(rsp, errors.New("this is a test warning result targeting the composite")).TargetComposite()
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Warning(rsp, errors.New("this is a test fatal result targeting both")).TargetCompositeAndClaim()
 					},
 				},
 			},
 			want: want{
-				results: []*v1beta1.Result{
+				results: []*v1.Result{
 					{
-						Severity: v1beta1.Severity_SEVERITY_WARNING,
+						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result targeting the composite",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_WARNING,
+						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test fatal result targeting both",
-						Target:   v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 					},
 				},
 			},
@@ -115,26 +115,26 @@ func TestResult(t *testing.T) {
 			reason: "Correctly sets reason on result and adds it to the response.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Normal(rsp, "this is a test normal result targeting the composite").WithReason("TestReason")
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Warning(rsp, errors.New("this is a test warning result targeting the composite")).WithReason("TestReason")
 					},
 				},
 			},
 			want: want{
-				results: []*v1beta1.Result{
+				results: []*v1.Result{
 					{
-						Severity: v1beta1.Severity_SEVERITY_NORMAL,
+						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal result targeting the composite",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 						Reason:   ptr.To("TestReason"),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_WARNING,
+						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result targeting the composite",
-						Target:   v1beta1.Target_TARGET_COMPOSITE.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
 						Reason:   ptr.To("TestReason"),
 					},
 				},
@@ -144,12 +144,12 @@ func TestResult(t *testing.T) {
 			reason: "Can chain result options together.",
 			args: args{
 				fns: []testFn{
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Normal(rsp, "this is a test normal result targeting the composite and claim").
 							WithReason("TestReason").
 							TargetCompositeAndClaim()
 					},
-					func(rsp *v1beta1.RunFunctionResponse) {
+					func(rsp *v1.RunFunctionResponse) {
 						response.Warning(rsp, errors.New("this is a test warning result targeting the composite and claim")).
 							TargetCompositeAndClaim().
 							WithReason("TestReason")
@@ -157,17 +157,17 @@ func TestResult(t *testing.T) {
 				},
 			},
 			want: want{
-				results: []*v1beta1.Result{
+				results: []*v1.Result{
 					{
-						Severity: v1beta1.Severity_SEVERITY_NORMAL,
+						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal result targeting the composite and claim",
-						Target:   v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 						Reason:   ptr.To("TestReason"),
 					},
 					{
-						Severity: v1beta1.Severity_SEVERITY_WARNING,
+						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result targeting the composite and claim",
-						Target:   v1beta1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
+						Target:   v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
 						Reason:   ptr.To("TestReason"),
 					},
 				},
@@ -176,7 +176,7 @@ func TestResult(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			rsp := &v1beta1.RunFunctionResponse{}
+			rsp := &v1.RunFunctionResponse{}
 			for _, f := range tc.args.fns {
 				f(rsp)
 			}

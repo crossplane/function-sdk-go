@@ -21,16 +21,16 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/response"
 )
 
-var req = &v1beta1.RunFunctionRequest{
-	Observed: &v1beta1.State{
-		Composite: &v1beta1.Resource{
+var req = &v1.RunFunctionRequest{
+	Observed: &v1.State{
+		Composite: &v1.Resource{
 			Resource: resource.MustStructJSON(`{"spec":{"widgets":9001}}`),
 		},
 	},
@@ -61,7 +61,7 @@ func Example() {
 	desired["new"].Resource.SetInteger("spec.widgets", widgets)
 
 	// Create a desired composed resource using structured data.
-	// db, _ := composed.From(&v1beta1.Instance{})
+	// db, _ := composed.From(&v1.Instance{})
 	// desired["database"] = &resource.DesiredComposed{Resource: db}
 
 	// Add a label to our new desired resource, and any other.

@@ -31,7 +31,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/crossplane/function-sdk-go/logging"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 )
 
 // Default ServeOptions.
@@ -127,7 +127,7 @@ func MaxRecvMessageSize(sz int) ServeOption {
 
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
-func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
+func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	so := &ServeOptions{
 		Network:        DefaultNetwork,
 		Address:        DefaultAddress,
@@ -151,7 +151,7 @@ func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 
 	srv := grpc.NewServer(grpc.MaxRecvMsgSize(so.MaxRecvMsgSize), grpc.Creds(so.Credentials))
 	reflection.Register(srv)
-	v1beta1.RegisterFunctionRunnerServiceServer(srv, fn)
+	v1.RegisterFunctionRunnerServiceServer(srv, fn)
 	return errors.Wrap(srv.Serve(lis), "cannot serve mTLS gRPC connections")
 }
 

@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/crossplane/function-sdk-go/errors"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 )
 
@@ -33,9 +33,9 @@ const DefaultTTL = 1 * time.Minute
 
 // To bootstraps a response to the supplied request. It automatically copies the
 // desired state from the request.
-func To(req *v1beta1.RunFunctionRequest, ttl time.Duration) *v1beta1.RunFunctionResponse {
-	return &v1beta1.RunFunctionResponse{
-		Meta: &v1beta1.ResponseMeta{
+func To(req *v1.RunFunctionRequest, ttl time.Duration) *v1.RunFunctionResponse {
+	return &v1.RunFunctionResponse{
+		Meta: &v1.ResponseMeta{
 			Tag: req.GetMeta().GetTag(),
 			Ttl: durationpb.New(ttl),
 		},
@@ -45,7 +45,7 @@ func To(req *v1beta1.RunFunctionRequest, ttl time.Duration) *v1beta1.RunFunction
 }
 
 // SetContextKey sets context to the supplied key.
-func SetContextKey(rsp *v1beta1.RunFunctionResponse, key string, v *structpb.Value) {
+func SetContextKey(rsp *v1.RunFunctionResponse, key string, v *structpb.Value) {
 	if rsp.GetContext().GetFields() == nil {
 		rsp.Context = &structpb.Struct{Fields: make(map[string]*structpb.Value)}
 	}
@@ -56,12 +56,12 @@ func SetContextKey(rsp *v1beta1.RunFunctionResponse, key string, v *structpb.Val
 // supplied response. The caller must be sure to avoid overwriting the desired
 // state that may have been accumulated by previous Functions in the pipeline,
 // unless they intend to.
-func SetDesiredCompositeResource(rsp *v1beta1.RunFunctionResponse, xr *resource.Composite) error {
+func SetDesiredCompositeResource(rsp *v1.RunFunctionResponse, xr *resource.Composite) error {
 	if rsp.GetDesired() == nil {
-		rsp.Desired = &v1beta1.State{}
+		rsp.Desired = &v1.State{}
 	}
 	s, err := resource.AsStruct(xr.Resource)
-	rsp.Desired.Composite = &v1beta1.Resource{Resource: s, ConnectionDetails: xr.ConnectionDetails}
+	rsp.Desired.Composite = &v1.Resource{Resource: s, ConnectionDetails: xr.ConnectionDetails}
 	return errors.Wrapf(err, "cannot convert %T to desired composite resource", xr.Resource)
 }
 
@@ -69,26 +69,26 @@ func SetDesiredCompositeResource(rsp *v1beta1.RunFunctionResponse, xr *resource.
 // supplied response. The caller must be sure to avoid overwriting the desired
 // state that may have been accumulated by previous Functions in the pipeline,
 // unless they intend to.
-func SetDesiredComposedResources(rsp *v1beta1.RunFunctionResponse, dcds map[resource.Name]*resource.DesiredComposed) error {
+func SetDesiredComposedResources(rsp *v1.RunFunctionResponse, dcds map[resource.Name]*resource.DesiredComposed) error {
 	if rsp.GetDesired() == nil {
-		rsp.Desired = &v1beta1.State{}
+		rsp.Desired = &v1.State{}
 	}
 	if rsp.GetDesired().GetResources() == nil {
-		rsp.Desired.Resources = map[string]*v1beta1.Resource{}
+		rsp.Desired.Resources = map[string]*v1.Resource{}
 	}
 	for name, dcd := range dcds {
 		s, err := resource.AsStruct(dcd.Resource)
 		if err != nil {
 			return err
 		}
-		r := &v1beta1.Resource{Resource: s}
+		r := &v1.Resource{Resource: s}
 		switch dcd.Ready {
 		case resource.ReadyUnspecified:
-			r.Ready = v1beta1.Ready_READY_UNSPECIFIED
+			r.Ready = v1.Ready_READY_UNSPECIFIED
 		case resource.ReadyFalse:
-			r.Ready = v1beta1.Ready_READY_FALSE
+			r.Ready = v1.Ready_READY_FALSE
 		case resource.ReadyTrue:
-			r.Ready = v1beta1.Ready_READY_TRUE
+			r.Ready = v1.Ready_READY_TRUE
 		}
 		rsp.Desired.Resources[string(name)] = r
 	}
