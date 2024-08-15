@@ -22,11 +22,14 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
+	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/response"
 )
+
+var _ v1beta1.FunctionRunnerServiceServer = &BetaServer{}
 
 var req = &v1.RunFunctionRequest{
 	Observed: &v1.State{
