@@ -206,12 +206,12 @@ func (s *BetaServer) RunFunction(ctx context.Context, req *v1beta1.RunFunctionRe
 		return nil, err
 	}
 
-	rsp := &v1beta1.RunFunctionResponse{}
-	b, err = proto.Marshal(rsp)
+	b, err = proto.Marshal(garsp)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal v1beta1 RunFunctionResponse to protobuf bytes")
 	}
 
-	err = proto.Unmarshal(b, garsp)
+	rsp := &v1beta1.RunFunctionResponse{}
+	err = proto.Unmarshal(b, rsp)
 	return rsp, errors.Wrap(err, "cannot unmarshal v1 RunFunctionResponse from v1beta1 protobuf bytes")
 }

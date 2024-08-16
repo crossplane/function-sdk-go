@@ -17,10 +17,16 @@ limitations under the License.
 package function
 
 import (
+	"context"
 	"fmt"
+	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/crossplane/function-sdk-go/errors"
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
@@ -80,4 +86,87 @@ func Example() {
 
 	// Output:
 	// {"meta":{"ttl":"60s"},"desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1","kind":"CoolResource","metadata":{"labels":{"coolness":"high"}},"spec":{"widgets":9001}}}}}}
+}
+
+func TestBetaServer(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		req *v1beta1.RunFunctionRequest
+	}
+	type want struct {
+		rsp *v1beta1.RunFunctionResponse
+		err error
+	}
+
+	cases := map[string]struct {
+		reason  string
+		wrapped v1.FunctionRunnerServiceServer
+		args    args
+		want    want
+	}{
+		"RunFunctionError": {
+			reason:  "We should return any error the wrapped server encounters",
+			wrapped: &MockFunctionServer{err: errors.New("boom")},
+			args: args{
+				req: &v1beta1.RunFunctionRequest{
+					Meta: &v1beta1.RequestMeta{
+						Tag: "hi",
+					},
+				},
+			},
+			want: want{
+				err: cmpopts.AnyError,
+			},
+		},
+		"Success": {
+			reason: "We should return the response the wrapped server returns",
+			wrapped: &MockFunctionServer{
+				rsp: &v1.RunFunctionResponse{
+					Meta: &v1.ResponseMeta{
+						Tag: "hello",
+					},
+				},
+			},
+			args: args{
+				req: &v1beta1.RunFunctionRequest{
+					Meta: &v1beta1.RequestMeta{
+						Tag: "hi",
+					},
+				},
+			},
+			want: want{
+				rsp: &v1beta1.RunFunctionResponse{
+					Meta: &v1beta1.ResponseMeta{
+						Tag: "hello",
+					},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			s := ServeBeta(tc.wrapped)
+			rsp, err := s.RunFunction(tc.args.ctx, tc.args.req)
+
+			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform()); diff != "" {
+				t.Errorf("\n%s\ns.RunFunction(...): -want rsp, +got rsp:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
+				t.Errorf("\n%s\ns.RunFunction(...): -want err, +got err:\n%s", tc.reason, diff)
+			}
+		})
+	}
+
+}
+
+type MockFunctionServer struct {
+	v1.UnimplementedFunctionRunnerServiceServer
+
+	rsp *v1.RunFunctionResponse
+	err error
+}
+
+func (s *MockFunctionServer) RunFunction(context.Context, *v1.RunFunctionRequest) (*v1.RunFunctionResponse, error) {
+	return s.rsp, s.err
 }
