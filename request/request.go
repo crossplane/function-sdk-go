@@ -23,19 +23,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/function-sdk-go/errors"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
 )
 
 // GetInput from the supplied request. Input is loaded into the supplied object.
-func GetInput(req *v1beta1.RunFunctionRequest, into runtime.Object) error {
+func GetInput(req *v1.RunFunctionRequest, into runtime.Object) error {
 	return errors.Wrapf(resource.AsObject(req.GetInput(), into), "cannot get function input %T from %T", into, req)
 }
 
 // GetContextKey gets context from the supplied key.
-func GetContextKey(req *v1beta1.RunFunctionRequest, key string) (*structpb.Value, bool) {
+func GetContextKey(req *v1.RunFunctionRequest, key string) (*structpb.Value, bool) {
 	f := req.GetContext().GetFields()
 	if f == nil {
 		return nil, false
@@ -45,7 +45,7 @@ func GetContextKey(req *v1beta1.RunFunctionRequest, key string) (*structpb.Value
 }
 
 // GetObservedCompositeResource from the supplied request.
-func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Composite, error) {
+func GetObservedCompositeResource(req *v1.RunFunctionRequest) (*resource.Composite, error) {
 	xr := &resource.Composite{
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetObserved().GetComposite().GetConnectionDetails(),
@@ -60,7 +60,7 @@ func GetObservedCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Co
 }
 
 // GetObservedComposedResources from the supplied request.
-func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]resource.ObservedComposed, error) {
+func GetObservedComposedResources(req *v1.RunFunctionRequest) (map[resource.Name]resource.ObservedComposed, error) {
 	ocds := map[resource.Name]resource.ObservedComposed{}
 	for name, r := range req.GetObserved().GetResources() {
 		ocd := resource.ObservedComposed{Resource: composed.New(), ConnectionDetails: r.GetConnectionDetails()}
@@ -78,7 +78,7 @@ func GetObservedComposedResources(req *v1beta1.RunFunctionRequest) (map[resource
 }
 
 // GetDesiredCompositeResource from the supplied request.
-func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Composite, error) {
+func GetDesiredCompositeResource(req *v1.RunFunctionRequest) (*resource.Composite, error) {
 	xr := &resource.Composite{
 		Resource:          composite.New(),
 		ConnectionDetails: req.GetDesired().GetComposite().GetConnectionDetails(),
@@ -93,7 +93,7 @@ func GetDesiredCompositeResource(req *v1beta1.RunFunctionRequest) (*resource.Com
 }
 
 // GetDesiredComposedResources from the supplied request.
-func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.Name]*resource.DesiredComposed, error) {
+func GetDesiredComposedResources(req *v1.RunFunctionRequest) (map[resource.Name]*resource.DesiredComposed, error) {
 	dcds := map[resource.Name]*resource.DesiredComposed{}
 	for name, r := range req.GetDesired().GetResources() {
 		dcd := &resource.DesiredComposed{Resource: composed.New()}
@@ -101,11 +101,11 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 			return nil, err
 		}
 		switch r.GetReady() {
-		case v1beta1.Ready_READY_UNSPECIFIED:
+		case v1.Ready_READY_UNSPECIFIED:
 			dcd.Ready = resource.ReadyUnspecified
-		case v1beta1.Ready_READY_TRUE:
+		case v1.Ready_READY_TRUE:
 			dcd.Ready = resource.ReadyTrue
-		case v1beta1.Ready_READY_FALSE:
+		case v1.Ready_READY_FALSE:
 			dcd.Ready = resource.ReadyFalse
 		}
 		dcds[resource.Name(name)] = dcd
@@ -114,7 +114,7 @@ func GetDesiredComposedResources(req *v1beta1.RunFunctionRequest) (map[resource.
 }
 
 // GetExtraResources from the supplied request.
-func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.Extra, error) {
+func GetExtraResources(req *v1.RunFunctionRequest) (map[string][]resource.Extra, error) {
 	out := make(map[string][]resource.Extra, len(req.GetExtraResources()))
 	for name, ers := range req.GetExtraResources() {
 		out[name] = []resource.Extra{}
@@ -130,14 +130,14 @@ func GetExtraResources(req *v1beta1.RunFunctionRequest) (map[string][]resource.E
 }
 
 // GetCredentials from the supplied request.
-func GetCredentials(req *v1beta1.RunFunctionRequest, name string) (resource.Credentials, error) {
+func GetCredentials(req *v1.RunFunctionRequest, name string) (resource.Credentials, error) {
 	cred, exists := req.GetCredentials()[name]
 	if !exists {
 		return resource.Credentials{}, errors.Errorf("%s: credential not found", name)
 	}
 
 	switch t := cred.GetSource().(type) {
-	case *v1beta1.Credentials_CredentialData:
+	case *v1.Credentials_CredentialData:
 		return resource.Credentials{Type: resource.CredentialsTypeData, Data: cred.GetCredentialData().GetData()}, nil
 	default:
 		return resource.Credentials{}, errors.Errorf("%s: not a supported credential source", t)

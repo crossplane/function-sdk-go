@@ -18,6 +18,7 @@ limitations under the License.
 package function
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net"
@@ -29,8 +30,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	ginsecure "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/crossplane/function-sdk-go/logging"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 )
 
@@ -127,7 +130,7 @@ func MaxRecvMessageSize(sz int) ServeOption {
 
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
-func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
+func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	so := &ServeOptions{
 		Network:        DefaultNetwork,
 		Address:        DefaultAddress,
@@ -151,11 +154,64 @@ func Serve(fn v1beta1.FunctionRunnerServiceServer, o ...ServeOption) error {
 
 	srv := grpc.NewServer(grpc.MaxRecvMsgSize(so.MaxRecvMsgSize), grpc.Creds(so.Credentials))
 	reflection.Register(srv)
-	v1beta1.RegisterFunctionRunnerServiceServer(srv, fn)
+	v1.RegisterFunctionRunnerServiceServer(srv, fn)
+	v1beta1.RegisterFunctionRunnerServiceServer(srv, ServeBeta(fn))
 	return errors.Wrap(srv.Serve(lis), "cannot serve mTLS gRPC connections")
 }
 
 // NewLogger returns a new logger.
 func NewLogger(debug bool) (logging.Logger, error) {
 	return logging.NewLogger(debug)
+}
+
+// A BetaServer is a v1beta1 FunctionRunnerServiceServer that wraps an identical
+// v1 FunctionRunnerServiceServer. This requires the v1 and v1beta1 protos to be
+// identical.
+//
+// Functions were promoted from v1beta1 to v1 in Crossplane v1.17. Crossplane
+// v1.16 and earlier only sends v1beta1 RunFunctionRequests. Functions should
+// use the BetaServer for backward compatibility, to support Crossplane v1.16
+// and earlier.
+type BetaServer struct {
+	wrapped v1.FunctionRunnerServiceServer
+
+	v1beta1.UnimplementedFunctionRunnerServiceServer
+}
+
+// ServeBeta returns a v1beta1.FunctionRunnerServiceServer that wraps the
+// suppled v1.FunctionRunnerServiceServer.
+func ServeBeta(s v1.FunctionRunnerServiceServer) *BetaServer {
+	return &BetaServer{wrapped: s}
+}
+
+// RunFunction calls the RunFunction method of the wrapped
+// v1.FunctionRunnerServiceServer. It converts from v1beta1 to v1 and back by
+// round-tripping through protobuf marshaling.
+func (s *BetaServer) RunFunction(ctx context.Context, req *v1beta1.RunFunctionRequest) (*v1beta1.RunFunctionResponse, error) {
+	gareq := &v1.RunFunctionRequest{}
+
+	b, err := proto.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot marshal v1beta1 RunFunctionRequest to protobuf bytes")
+	}
+
+	if err := proto.Unmarshal(b, gareq); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal v1 RunFunctionRequest from v1beta1 protobuf bytes")
+	}
+
+	garsp, err := s.wrapped.RunFunction(ctx, gareq)
+	if err != nil {
+		// This error is intentionally not wrapped. This middleware is just
+		// calling an underlying RunFunction.
+		return nil, err
+	}
+
+	b, err = proto.Marshal(garsp)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot marshal v1beta1 RunFunctionResponse to protobuf bytes")
+	}
+
+	rsp := &v1beta1.RunFunctionResponse{}
+	err = proto.Unmarshal(b, rsp)
+	return rsp, errors.Wrap(err, "cannot unmarshal v1 RunFunctionResponse from v1beta1 protobuf bytes")
 }

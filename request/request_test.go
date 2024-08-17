@@ -23,7 +23,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
@@ -37,12 +37,12 @@ func TestGetObservedCompositeResource(t *testing.T) {
 
 	cases := map[string]struct {
 		reason string
-		req    *v1beta1.RunFunctionRequest
+		req    *v1.RunFunctionRequest
 		want   want
 	}{
 		"NoObservedXR": {
 			reason: "In the unlikely event the request has no observed XR we should return a usable, empty Composite.",
-			req:    &v1beta1.RunFunctionRequest{},
+			req:    &v1.RunFunctionRequest{},
 			want: want{
 				oxr: &resource.Composite{
 					Resource:          composite.New(),
@@ -52,9 +52,9 @@ func TestGetObservedCompositeResource(t *testing.T) {
 		},
 		"ObservedXR": {
 			reason: "We should return the XR read from the request.",
-			req: &v1beta1.RunFunctionRequest{
-				Observed: &v1beta1.State{
-					Composite: &v1beta1.Resource{
+			req: &v1.RunFunctionRequest{
+				Observed: &v1.State{
+					Composite: &v1.Resource{
 						Resource: resource.MustStructJSON(`{
 							"apiVersion": "test.crossplane.io/v1",
 							"kind": "XR"
@@ -103,12 +103,12 @@ func TestGetDesiredCompositeResource(t *testing.T) {
 
 	cases := map[string]struct {
 		reason string
-		req    *v1beta1.RunFunctionRequest
+		req    *v1.RunFunctionRequest
 		want   want
 	}{
 		"NoDesiredXR": {
 			reason: "If the request has no desired XR we should return a usable, empty Composite.",
-			req:    &v1beta1.RunFunctionRequest{},
+			req:    &v1.RunFunctionRequest{},
 			want: want{
 				oxr: &resource.Composite{
 					Resource:          composite.New(),
@@ -118,9 +118,9 @@ func TestGetDesiredCompositeResource(t *testing.T) {
 		},
 		"DesiredXR": {
 			reason: "We should return the XR read from the request.",
-			req: &v1beta1.RunFunctionRequest{
-				Desired: &v1beta1.State{
-					Composite: &v1beta1.Resource{
+			req: &v1.RunFunctionRequest{
+				Desired: &v1.State{
+					Composite: &v1.Resource{
 						Resource: resource.MustStructJSON(`{
 							"apiVersion": "test.crossplane.io/v1",
 							"kind": "XR"
@@ -169,21 +169,21 @@ func TestGetObservedComposedResources(t *testing.T) {
 
 	cases := map[string]struct {
 		reason string
-		req    *v1beta1.RunFunctionRequest
+		req    *v1.RunFunctionRequest
 		want   want
 	}{
 		"NoObservedComposedResources": {
 			reason: "If the request has no observed composed resources we should return an empty, non-nil map.",
-			req:    &v1beta1.RunFunctionRequest{},
+			req:    &v1.RunFunctionRequest{},
 			want: want{
 				ocds: map[resource.Name]resource.ObservedComposed{},
 			},
 		},
 		"ObservedComposedResources": {
 			reason: "If the request has observed composed resources we should return them.",
-			req: &v1beta1.RunFunctionRequest{
-				Observed: &v1beta1.State{
-					Resources: map[string]*v1beta1.Resource{
+			req: &v1.RunFunctionRequest{
+				Observed: &v1.State{
+					Resources: map[string]*v1.Resource{
 						"observed-composed-resource": {
 							Resource: resource.MustStructJSON(`{
 								"apiVersion": "test.crossplane.io/v1",
@@ -236,27 +236,27 @@ func TestGetDesiredComposedResources(t *testing.T) {
 
 	cases := map[string]struct {
 		reason string
-		req    *v1beta1.RunFunctionRequest
+		req    *v1.RunFunctionRequest
 		want   want
 	}{
 		"NoDesiredComposedResources": {
 			reason: "If the request has no desired composed resources we should return an empty, non-nil map.",
-			req:    &v1beta1.RunFunctionRequest{},
+			req:    &v1.RunFunctionRequest{},
 			want: want{
 				dcds: map[resource.Name]*resource.DesiredComposed{},
 			},
 		},
 		"DesiredComposedResources": {
 			reason: "If the request has desired composed resources we should return them.",
-			req: &v1beta1.RunFunctionRequest{
-				Desired: &v1beta1.State{
-					Resources: map[string]*v1beta1.Resource{
+			req: &v1.RunFunctionRequest{
+				Desired: &v1.State{
+					Resources: map[string]*v1.Resource{
 						"desired-composed-resource": {
 							Resource: resource.MustStructJSON(`{
 								"apiVersion": "test.crossplane.io/v1",
 								"kind": "Composed"
 							}`),
-							Ready: v1beta1.Ready_READY_TRUE,
+							Ready: v1.Ready_READY_TRUE,
 						},
 					},
 				},
