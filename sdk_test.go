@@ -79,13 +79,31 @@ func Example() {
 	}
 
 	// Set our updated desired composed resource in the response we'll return.
-	_ = response.SetDesiredComposedResources(rsp, desired)
+	if err := response.SetDesiredComposedResources(rsp, desired); err != nil {
+		// You can set a custom status condition on the claim. This allows you to
+		// communicate with the user. See the link below for status condition
+		// guidance.
+		// https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+		response.ConditionFalse(rsp, "FunctionSuccess", "InternalError").
+			WithMessage("Something went wrong.").
+			TargetCompositeAndClaim()
+
+		// You can emit an event regarding the claim. This allows you to communicate
+		// with the user. Note that events should be used sparingly and are subject
+		// to throttling; see the issue below for more information.
+		// https://github.com/crossplane/crossplane/issues/5802
+		response.Warning(rsp, errors.New("something went wrong")).
+			TargetCompositeAndClaim()
+	} else {
+		response.ConditionTrue(rsp, "FunctionSuccess", "Success").
+			TargetCompositeAndClaim()
+	}
 
 	j, _ := protojson.Marshal(rsp)
 	fmt.Println(string(j))
 
 	// Output:
-	// {"meta":{"ttl":"60s"},"desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1","kind":"CoolResource","metadata":{"labels":{"coolness":"high"}},"spec":{"widgets":9001}}}}}}
+	// {"meta":{"ttl":"60s"},"desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1","kind":"CoolResource","metadata":{"labels":{"coolness":"high"}},"spec":{"widgets":9001}}}}},"conditions":[{"type":"FunctionSuccess","status":"STATUS_CONDITION_TRUE","reason":"Success","target":"TARGET_COMPOSITE_AND_CLAIM"}]}
 }
 
 func TestBetaServer(t *testing.T) {
