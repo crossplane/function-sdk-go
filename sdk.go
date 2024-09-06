@@ -41,7 +41,7 @@ import (
 const (
 	DefaultNetwork        = "tcp"
 	DefaultAddress        = ":9443"
-	DefaultMaxRecvMsgSize = 4096
+	DefaultMaxRecvMsgSize = 1024 * 1024 * 4
 )
 
 // ServeOptions configure how a Function is served.
