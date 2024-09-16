@@ -1,11 +1,13 @@
 module github.com/crossplane/function-sdk-go
 
-go 1.21
+go 1.23
+
+toolchain go1.23.1
 
 require (
 	github.com/bufbuild/buf v1.30.0
 	github.com/crossplane/crossplane-runtime v1.16.0
-	github.com/go-json-experiment/json v0.0.0-20231102232822-2e55bd4e08b0
+	github.com/go-json-experiment/json v0.0.0-20240815175050-ebd3a8989ca1
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.6.0
