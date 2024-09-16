@@ -14,7 +14,7 @@ require (
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.62.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.34.2
 	k8s.io/api v0.29.1
 	k8s.io/apimachinery v0.29.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
