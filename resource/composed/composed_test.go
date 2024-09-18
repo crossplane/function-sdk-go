@@ -22,7 +22,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/upbound/provider-aws/apis/s3/v1beta1"
+	"github.com/upbound/provider-aws/apis/s3/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,25 +62,25 @@ func Example() {
 }
 
 func ExampleScheme() {
-	// Add all v1beta1 types to the scheme so that From can automatically
+	// Add all v1beta2 types to the scheme so that From can automatically
 	// determine their apiVersion and kind.
-	v1beta1.AddToScheme(Scheme)
+	v1beta2.AddToScheme(Scheme)
 }
 
 func ExampleFrom() {
-	// Add all v1beta1 types to the scheme so that From can automatically
+	// Add all v1beta2 types to the scheme so that From can automatically
 	// determine their apiVersion and kind.
-	v1beta1.AddToScheme(Scheme)
+	v1beta2.AddToScheme(Scheme)
 
 	// Create a strongly typed runtime.Object, imported from a provider.
-	b := &v1beta1.Bucket{
+	b := &v1beta2.Bucket{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"coolness": "high",
 			},
 		},
-		Spec: v1beta1.BucketSpec{
-			ForProvider: v1beta1.BucketParameters{
+		Spec: v1beta2.BucketSpec{
+			ForProvider: v1beta2.BucketParameters{
 				Region: ptr.To[string]("us-east-2"),
 			},
 		},
@@ -100,7 +100,7 @@ func ExampleFrom() {
 	fmt.Println(string(y))
 
 	// Output:
-	// apiVersion: s3.aws.upbound.io/v1beta1
+	// apiVersion: s3.aws.upbound.io/v1beta2
 	// kind: Bucket
 	// metadata:
 	//   labels:
@@ -113,7 +113,7 @@ func ExampleFrom() {
 }
 
 func TestFrom(t *testing.T) {
-	v1beta1.AddToScheme(Scheme)
+	v1beta2.AddToScheme(Scheme)
 
 	type args struct {
 		o runtime.Object
@@ -130,12 +130,12 @@ func TestFrom(t *testing.T) {
 		"WithMetadata": {
 			reason: "A resource with metadata should not grow any extra metadata fields during conversion",
 			args: args{
-				o: &v1beta1.Bucket{
+				o: &v1beta2.Bucket{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cool-bucket",
 					},
-					Spec: v1beta1.BucketSpec{
-						ForProvider: v1beta1.BucketParameters{
+					Spec: v1beta2.BucketSpec{
+						ForProvider: v1beta2.BucketParameters{
 							Region: ptr.To[string]("us-east-2"),
 						},
 					},
@@ -143,8 +143,8 @@ func TestFrom(t *testing.T) {
 			},
 			want: want{
 				cd: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": v1beta1.CRDGroupVersion.String(),
-					"kind":       v1beta1.Bucket_Kind,
+					"apiVersion": v1beta2.CRDGroupVersion.String(),
+					"kind":       v1beta2.Bucket_Kind,
 					"metadata": map[string]any{
 						"name": "cool-bucket",
 					},
@@ -162,9 +162,9 @@ func TestFrom(t *testing.T) {
 		"WithoutMetadata": {
 			reason: "A resource with no metadata should not grow a metadata object during conversion",
 			args: args{
-				o: &v1beta1.Bucket{
-					Spec: v1beta1.BucketSpec{
-						ForProvider: v1beta1.BucketParameters{
+				o: &v1beta2.Bucket{
+					Spec: v1beta2.BucketSpec{
+						ForProvider: v1beta2.BucketParameters{
 							Region: ptr.To[string]("us-east-2"),
 						},
 					},
@@ -172,8 +172,8 @@ func TestFrom(t *testing.T) {
 			},
 			want: want{
 				cd: &Unstructured{Unstructured: unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": v1beta1.CRDGroupVersion.String(),
-					"kind":       v1beta1.Bucket_Kind,
+					"apiVersion": v1beta2.CRDGroupVersion.String(),
+					"kind":       v1beta2.Bucket_Kind,
 					"spec": map[string]any{
 						"forProvider": map[string]any{
 							"region": "us-east-2",
