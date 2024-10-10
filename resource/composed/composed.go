@@ -63,11 +63,7 @@ func To[T runtime.Object](un *Unstructured, obj T) error {
 		return errors.Errorf("GVK %v is not known by the scheme for the provided object type", un.GetObjectKind().GroupVersionKind())
 	}
 
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(un.Object, obj)
-	if err != nil {
-		return err
-	}
-	return nil
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(un.Object, obj)
 }
 
 // From creates a new unstructured composed resource from the supplied object.
