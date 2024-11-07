@@ -10,7 +10,7 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.23.1'
+  GO_VERSION: '1.23.3'
   GOLANGCI_VERSION: 'v1.61.0'
 
 jobs:
