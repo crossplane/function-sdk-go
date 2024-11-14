@@ -30,7 +30,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
-	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/claim"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/reference"
 )
 
 // New returns a new unstructured composite resource (XR).
@@ -104,8 +104,8 @@ func (xr *Unstructured) SetCompositionReference(ref *corev1.ObjectReference) {
 }
 
 // GetCompositionRevisionReference of this composite resource.
-func (xr *Unstructured) GetCompositionRevisionReference() *corev1.ObjectReference {
-	out := &corev1.ObjectReference{}
+func (xr *Unstructured) GetCompositionRevisionReference() *corev1.LocalObjectReference {
+	out := &corev1.LocalObjectReference{}
 	if err := fieldpath.Pave(xr.Object).GetValueInto("spec.compositionRevisionRef", out); err != nil {
 		return nil
 	}
@@ -113,7 +113,7 @@ func (xr *Unstructured) GetCompositionRevisionReference() *corev1.ObjectReferenc
 }
 
 // SetCompositionRevisionReference of this composite resource.
-func (xr *Unstructured) SetCompositionRevisionReference(ref *corev1.ObjectReference) {
+func (xr *Unstructured) SetCompositionRevisionReference(ref *corev1.LocalObjectReference) {
 	_ = fieldpath.Pave(xr.Object).SetValue("spec.compositionRevisionRef", ref)
 }
 
@@ -147,8 +147,8 @@ func (xr *Unstructured) GetCompositionUpdatePolicy() *xpv1.UpdatePolicy {
 }
 
 // GetClaimReference of this composite resource.
-func (xr *Unstructured) GetClaimReference() *claim.Reference {
-	out := &claim.Reference{}
+func (xr *Unstructured) GetClaimReference() *reference.Claim {
+	out := &reference.Claim{}
 	if err := fieldpath.Pave(xr.Object).GetValueInto("spec.claimRef", out); err != nil {
 		return nil
 	}
@@ -156,7 +156,7 @@ func (xr *Unstructured) GetClaimReference() *claim.Reference {
 }
 
 // SetClaimReference of this composite resource.
-func (xr *Unstructured) SetClaimReference(ref *claim.Reference) {
+func (xr *Unstructured) SetClaimReference(ref *reference.Claim) {
 	_ = fieldpath.Pave(xr.Object).SetValue("spec.claimRef", ref)
 }
 
