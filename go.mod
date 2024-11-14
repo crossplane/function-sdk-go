@@ -19,7 +19,7 @@ require (
 	google.golang.org/protobuf v1.34.3-0.20240816073751-94ecbc261689
 	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
-	k8s.io/utils v0.0.0-20240902221715-702e33fdd3c3
+	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078
 	sigs.k8s.io/yaml v1.4.0
 )
 
