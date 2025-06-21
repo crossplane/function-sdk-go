@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	ginsecure "google.golang.org/grpc/credentials/insecure"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/proto"
 
@@ -50,6 +51,7 @@ type ServeOptions struct {
 	Address        string
 	MaxRecvMsgSize int
 	Credentials    credentials.TransportCredentials
+	HealthServer   healthgrpc.HealthServer
 }
 
 // A ServeOption configures how a Function is served.
@@ -128,6 +130,19 @@ func MaxRecvMessageSize(sz int) ServeOption {
 	}
 }
 
+// WithHealthServer lets the server start with a health server that can be called
+// to verify that the server is ready to accept connections.
+//
+// Use it with the HealthServer from google.golang.org/grpc/health like in
+// [this](https://github.com/grpc/grpc-go/blob/master/examples/features/health/server/main.go)
+// example or provide your own implementation.
+func WithHealthServer(srv healthgrpc.HealthServer) ServeOption {
+	return func(o *ServeOptions) error {
+		o.HealthServer = srv
+		return nil
+	}
+}
+
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
 func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
@@ -156,6 +171,11 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	reflection.Register(srv)
 	v1.RegisterFunctionRunnerServiceServer(srv, fn)
 	v1beta1.RegisterFunctionRunnerServiceServer(srv, ServeBeta(fn))
+
+	if so.HealthServer != nil {
+		healthgrpc.RegisterHealthServer(srv, so.HealthServer)
+	}
+
 	return errors.Wrap(srv.Serve(lis), "cannot serve mTLS gRPC connections")
 }
 
