@@ -30,10 +30,13 @@ import (
 	"github.com/crossplane/function-sdk-go/errors"
 )
 
-// Scheme used to determine the type of any runtime.Object passed to From.
-var Scheme *runtime.Scheme
+// I don't love the package-scoped state here but this seems like the
+// nicest API to offer callers.
 
-func init() {
+// Scheme used to determine the type of any runtime.Object passed to From.
+var Scheme *runtime.Scheme //nolint:gochecknoglobals // See comment above.
+
+func init() { //nolint:gochecknoinits // See comment above.
 	Scheme = runtime.NewScheme()
 }
 
@@ -119,10 +122,12 @@ type Unstructured struct {
 	unstructured.Unstructured
 }
 
-var _ runtime.Object = &Unstructured{}
-var _ metav1.Object = &Unstructured{}
-var _ runtime.Unstructured = &Unstructured{}
-var _ resource.Composed = &Unstructured{}
+var (
+	_ runtime.Object       = &Unstructured{}
+	_ metav1.Object        = &Unstructured{}
+	_ runtime.Unstructured = &Unstructured{}
+	_ resource.Composed    = &Unstructured{}
+)
 
 // DeepCopy this composed resource.
 func (cd *Unstructured) DeepCopy() *Unstructured {
@@ -240,7 +245,6 @@ func (cd *Unstructured) GetInteger(path string) (int64, error) {
 	i64, err := p.GetInteger(path)
 	if err == nil {
 		return i64, nil
-
 	}
 
 	// If not, try return (and truncate) a float64.
