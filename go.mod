@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.2
 
 require (
-	github.com/bufbuild/buf v1.42.0
+	github.com/bufbuild/buf v1.55.1
 	github.com/crossplane/crossplane-runtime v1.18.0
 	github.com/go-json-experiment/json v0.0.0-20240815175050-ebd3a8989ca1
 	github.com/go-logr/logr v1.4.2
