@@ -52,10 +52,15 @@ type DesiredComposed struct {
 	Ready Ready
 }
 
-// Extra is a resource requested by a Function.
-type Extra struct {
+// Required is a resource explicitly required by a Function.
+type Required struct {
 	Resource *unstructured.Unstructured
 }
+
+// Extra is a resource explicitly required by a Function.
+//
+// Deprecated: Use Required.
+type Extra = Required
 
 // CredentialsType is the type of credentials.
 type CredentialsType string
