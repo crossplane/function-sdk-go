@@ -187,7 +187,6 @@ func TestCondition(t *testing.T) {
 			if diff := cmp.Diff(tc.want.conditions, rsp.GetConditions(), protocmp.Transform()); diff != "" {
 				t.Errorf("\n%s\nFrom(...): -want, +got:\n%s", tc.reason, diff)
 			}
-
 		})
 	}
 }
