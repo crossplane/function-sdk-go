@@ -65,6 +65,8 @@ func ExampleScheme() {
 	// Add all v1beta2 types to the scheme so that From can automatically
 	// determine their apiVersion and kind.
 	v1beta2.AddToScheme(Scheme)
+
+	// Output:
 }
 
 func ExampleFrom() {
