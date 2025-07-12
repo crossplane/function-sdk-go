@@ -55,8 +55,8 @@ type ServeOptions struct {
 // A ServeOption configures how a Function is served.
 type ServeOption func(o *ServeOptions) error
 
-// Listen configures the network, address and maximum message size on which the Function will
-// listen for RunFunctionRequests.
+// Listen configures the network, address, and maximum message size on which the
+// Function will listen for RunFunctionRequests.
 func Listen(network, address string) ServeOption {
 	return func(o *ServeOptions) error {
 		o.Network = network
@@ -173,9 +173,9 @@ func NewLogger(debug bool) (logging.Logger, error) {
 // use the BetaServer for backward compatibility, to support Crossplane v1.16
 // and earlier.
 type BetaServer struct {
-	wrapped v1.FunctionRunnerServiceServer
-
 	v1beta1.UnimplementedFunctionRunnerServiceServer
+
+	wrapped v1.FunctionRunnerServiceServer
 }
 
 // ServeBeta returns a v1beta1.FunctionRunnerServiceServer that wraps the

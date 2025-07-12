@@ -52,10 +52,15 @@ type DesiredComposed struct {
 	Ready Ready
 }
 
-// Extra is a resource requested by a Function.
-type Extra struct {
+// Required is a resource explicitly required by a Function.
+type Required struct {
 	Resource *unstructured.Unstructured
 }
+
+// Extra is a resource explicitly required by a Function.
+//
+// Deprecated: Use Required.
+type Extra = Required
 
 // CredentialsType is the type of credentials.
 type CredentialsType string
@@ -100,7 +105,7 @@ type ObservedComposed struct {
 func AsObject(s *structpb.Struct, o runtime.Object) error {
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
 	// Any type that is or embeds *unstructured.Unstructured has this method.
-	if u, ok := o.(interface{ SetUnstructuredContent(map[string]any) }); ok {
+	if u, ok := o.(interface{ SetUnstructuredContent(_ map[string]any) }); ok {
 		u.SetUnstructuredContent(s.AsMap())
 		return nil
 	}

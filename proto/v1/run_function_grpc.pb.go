@@ -19,7 +19,12 @@
 // - protoc             (unknown)
 // source: v1/run_function.proto
 
-//buf:lint:ignore PACKAGE_DIRECTORY_MATCH // Too late to fix this now.
+// This package defines the RPC for both composition and operation functions.
+// Only composition functions are part of the 'apiextensions' API group. In
+// retrospect this package should've been crossplane.proto.fn.v1, but it's too
+// late to change it now.
+
+//buf:lint:ignore PACKAGE_DIRECTORY_MATCH
 
 package v1
 
@@ -43,9 +48,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// A FunctionRunnerService is a Composition Function.
+// A FunctionRunnerService is a function.
 type FunctionRunnerServiceClient interface {
-	// RunFunction runs the Composition Function.
+	// RunFunction runs the function.
 	RunFunction(ctx context.Context, in *RunFunctionRequest, opts ...grpc.CallOption) (*RunFunctionResponse, error)
 }
 
@@ -71,9 +76,9 @@ func (c *functionRunnerServiceClient) RunFunction(ctx context.Context, in *RunFu
 // All implementations must embed UnimplementedFunctionRunnerServiceServer
 // for forward compatibility.
 //
-// A FunctionRunnerService is a Composition Function.
+// A FunctionRunnerService is a function.
 type FunctionRunnerServiceServer interface {
-	// RunFunction runs the Composition Function.
+	// RunFunction runs the function.
 	RunFunction(context.Context, *RunFunctionRequest) (*RunFunctionResponse, error)
 	mustEmbedUnimplementedFunctionRunnerServiceServer()
 }

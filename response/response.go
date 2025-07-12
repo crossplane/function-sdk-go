@@ -18,10 +18,13 @@ limitations under the License.
 package response
 
 import (
+	"encoding/json"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/crossplane/function-sdk-go/errors"
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
@@ -93,4 +96,37 @@ func SetDesiredComposedResources(rsp *v1.RunFunctionResponse, dcds map[resource.
 		rsp.Desired.Resources[string(name)] = r
 	}
 	return nil
+}
+
+// SetDesiredResources sets the desired resources in the supplied response. The
+// caller must be sure to avoid overwriting the desired state that may have been
+// accumulated by previous Functions in the pipeline, unless they intend to.
+func SetDesiredResources(rsp *v1.RunFunctionResponse, drs map[resource.Name]*unstructured.Unstructured) error {
+	if rsp.GetDesired() == nil {
+		rsp.Desired = &v1.State{}
+	}
+	if rsp.GetDesired().GetResources() == nil {
+		rsp.Desired.Resources = map[string]*v1.Resource{}
+	}
+	for name, r := range drs {
+		s, err := resource.AsStruct(r)
+		if err != nil {
+			return err
+		}
+		rsp.Desired.Resources[string(name)] = &v1.Resource{Resource: s}
+	}
+	return nil
+}
+
+// SetOutput sets the function's output. The supplied output must be marshalable
+// as JSON. Only operation functions support setting output. If a composition
+// function sets output it'll be ignored.
+func SetOutput(rsp *v1.RunFunctionResponse, output any) error {
+	j, err := json.Marshal(output)
+	if err != nil {
+		return errors.Wrap(err, "cannot marshal output to JSON")
+	}
+
+	rsp.Output = &structpb.Struct{}
+	return errors.Wrap(protojson.Unmarshal(j, rsp.Output), "cannot unmarshal JSON to protobuf struct") //nolint:protogetter // It's a set.
 }
