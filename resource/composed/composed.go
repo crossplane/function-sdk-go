@@ -30,8 +30,8 @@ import (
 	"github.com/crossplane/function-sdk-go/errors"
 )
 
-// I don't love the package-scoped state here but this seems like the
-// nicest API to offer callers.
+// NOTE(negz): I don't love the package-scoped state here but this seems like
+// the nicest API to offer callers.
 
 // Scheme used to determine the type of any runtime.Object passed to From.
 var Scheme *runtime.Scheme //nolint:gochecknoglobals // See comment above.
