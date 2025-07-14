@@ -103,7 +103,7 @@ func Wrap(err error, message string) error {
 	return WithMessage(err, message)
 }
 
-// Wrapf is an alias for WithMessagef
+// Wrapf is an alias for WithMessagef.
 func Wrapf(err error, format string, args ...any) error {
 	return WithMessagef(err, format, args...)
 }
@@ -157,6 +157,7 @@ type multiError struct {
 func (m multiError) Error() string {
 	return m.aggregate.Error()
 }
+
 func (m multiError) Unwrap() []error {
 	return m.aggregate.Errors()
 }

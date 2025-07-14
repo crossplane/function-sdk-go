@@ -129,7 +129,6 @@ func TestGetInteger(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 // EquateErrors returns true if the supplied errors are of the same type and

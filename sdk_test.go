@@ -175,7 +175,6 @@ func TestBetaServer(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 type MockFunctionServer struct {

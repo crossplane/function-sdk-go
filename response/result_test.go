@@ -184,7 +184,6 @@ func TestResult(t *testing.T) {
 			if diff := cmp.Diff(tc.want.results, rsp.GetResults(), protocmp.Transform()); diff != "" {
 				t.Errorf("\n%s\nFrom(...): -want, +got:\n%s", tc.reason, diff)
 			}
-
 		})
 	}
 }
