@@ -39,6 +39,8 @@ type ConnectionDetails map[string][]byte
 type Composite struct {
 	Resource          *composite.Unstructured
 	ConnectionDetails ConnectionDetails
+
+	Ready Ready
 }
 
 // A Name uniquely identifies a composed resource within a Composition Function
