@@ -115,8 +115,8 @@ func GetDesiredComposedResources(req *v1.RunFunctionRequest) (map[resource.Name]
 
 // GetRequiredResources from the supplied request.
 func GetRequiredResources(req *v1.RunFunctionRequest) (map[string][]resource.Required, error) {
-	out := make(map[string][]resource.Required, len(req.GetRequiredResources()))
-	for name, ers := range req.GetRequiredResources() {
+	out := make(map[string][]resource.Required, len(req.GetExtraResources()))
+	for name, ers := range req.GetExtraResources() {
 		out[name] = []resource.Required{}
 		for _, i := range ers.GetItems() {
 			r := &resource.Required{Resource: &unstructured.Unstructured{}}
