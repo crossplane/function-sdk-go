@@ -290,3 +290,137 @@ func TestGetDesiredComposedResources(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRequiredResources(t *testing.T) {
+	type want struct {
+		resources map[string][]resource.Required
+		err       error
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		want   want
+	}{
+		"NoRequiredResources": {
+			reason: "If the request has no required resources we should return an empty, non-nil map.",
+			req:    &v1.RunFunctionRequest{},
+			want: want{
+				resources: map[string][]resource.Required{},
+			},
+		},
+		"RequiredResources": {
+			reason: "If the request has required resources in the new field we should return them.",
+			req: &v1.RunFunctionRequest{
+				RequiredResources: map[string]*v1.Resources{
+					"test-resources": {
+						Items: []*v1.Resource{
+							{
+								Resource: resource.MustStructJSON(`{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind": "TestResource",
+									"metadata": {"name": "test"}
+								}`),
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				resources: map[string][]resource.Required{
+					"test-resources": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata":   map[string]any{"name": "test"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			resources, err := GetRequiredResources(tc.req)
+
+			if diff := cmp.Diff(tc.want.resources, resources); diff != "" {
+				t.Errorf("\n%s\nGetRequiredResources(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.err, err); diff != "" {
+				t.Errorf("\n%s\nGetRequiredResources(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestGetExtraResources(t *testing.T) {
+	type want struct {
+		resources map[string][]resource.Required
+		err       error
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		want   want
+	}{
+		"NoExtraResources": {
+			reason: "If the request has no extra resources we should return an empty, non-nil map.",
+			req:    &v1.RunFunctionRequest{},
+			want: want{
+				resources: map[string][]resource.Required{},
+			},
+		},
+		"ExtraResources": {
+			reason: "If the request has extra resources in the deprecated field we should return them.",
+			req: &v1.RunFunctionRequest{
+				ExtraResources: map[string]*v1.Resources{
+					"test-resources": {
+						Items: []*v1.Resource{
+							{
+								Resource: resource.MustStructJSON(`{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind": "TestResource",
+									"metadata": {"name": "test"}
+								}`),
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				resources: map[string][]resource.Required{
+					"test-resources": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata":   map[string]any{"name": "test"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			resources, err := GetExtraResources(tc.req)
+
+			if diff := cmp.Diff(tc.want.resources, resources); diff != "" {
+				t.Errorf("\n%s\nGetExtraResources(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.err, err); diff != "" {
+				t.Errorf("\n%s\nGetExtraResources(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
