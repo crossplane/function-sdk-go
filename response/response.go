@@ -64,8 +64,20 @@ func SetDesiredCompositeResource(rsp *v1.RunFunctionResponse, xr *resource.Compo
 		rsp.Desired = &v1.State{}
 	}
 	s, err := resource.AsStruct(xr.Resource)
-	rsp.Desired.Composite = &v1.Resource{Resource: s, ConnectionDetails: xr.ConnectionDetails}
-	return errors.Wrapf(err, "cannot convert %T to desired composite resource", xr.Resource)
+	r := &v1.Resource{Resource: s, ConnectionDetails: xr.ConnectionDetails}
+	if err != nil {
+		return errors.Wrapf(err, "cannot convert %T to desired composite resource", xr.Resource)
+	}
+	switch xr.Ready {
+	case resource.ReadyUnspecified:
+		r.Ready = v1.Ready_READY_UNSPECIFIED
+	case resource.ReadyFalse:
+		r.Ready = v1.Ready_READY_FALSE
+	case resource.ReadyTrue:
+		r.Ready = v1.Ready_READY_TRUE
+	}
+	rsp.Desired.Composite = r
+	return nil
 }
 
 // SetDesiredComposedResources sets the desired composed resources in the
