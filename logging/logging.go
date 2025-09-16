@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package logging provides function's recommended logging interface.
 //
-// Mainly a proxy for github.com/crossplane/crossplane-runtime/pkg/logging at
+// Mainly a proxy for github.com/crossplane/crossplane-runtime/v2/pkg/logging at
 // the moment, but could diverge in the future if we see it fit.
 package logging
 
@@ -25,7 +25,7 @@ import (
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/logging"
 
 	"github.com/crossplane/function-sdk-go/errors"
 )
