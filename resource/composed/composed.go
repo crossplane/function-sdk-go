@@ -23,9 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/fieldpath"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 
 	"github.com/crossplane/function-sdk-go/errors"
 )
@@ -187,20 +187,6 @@ func (cd *Unstructured) GetWriteConnectionSecretToReference() *xpv1.SecretRefere
 // SetWriteConnectionSecretToReference of this Composed resource.
 func (cd *Unstructured) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
 	_ = fieldpath.Pave(cd.Object).SetValue("spec.writeConnectionSecretToRef", r)
-}
-
-// GetPublishConnectionDetailsTo of this Composed resource.
-func (cd *Unstructured) GetPublishConnectionDetailsTo() *xpv1.PublishConnectionDetailsTo {
-	out := &xpv1.PublishConnectionDetailsTo{}
-	if err := fieldpath.Pave(cd.Object).GetValueInto("spec.publishConnectionDetailsTo", out); err != nil {
-		return nil
-	}
-	return out
-}
-
-// SetPublishConnectionDetailsTo of this Composed resource.
-func (cd *Unstructured) SetPublishConnectionDetailsTo(ref *xpv1.PublishConnectionDetailsTo) {
-	_ = fieldpath.Pave(cd.Object).SetValue("spec.publishConnectionDetailsTo", ref)
 }
 
 // GetValue of the supplied field path.

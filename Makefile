@@ -26,7 +26,7 @@ GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
 GO_SUBDIRS += errors proto resource response request
 GO111MODULE = on
-GOLANGCILINT_VERSION = 2.2.1
+GOLANGCILINT_VERSION = 2.4.0
 GO_LINT_ARGS ?= "--fix"
 -include build/makelib/golang.mk
 
