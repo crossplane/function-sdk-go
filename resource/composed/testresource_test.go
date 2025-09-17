@@ -17,11 +17,12 @@ limitations under the License.
 package composed
 
 import (
-	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
+
+	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 // TestResource is a generic test resource that mimics a Crossplane managed resource
@@ -34,7 +35,7 @@ type TestResource struct {
 	Status TestResourceStatus `json:"status,omitempty"`
 }
 
-// TestResourceSpec defines the desired state of TestResource
+// TestResourceSpec defines the desired state of TestResource.
 type TestResourceSpec struct {
 	v1.ResourceSpec `json:",inline"`
 
@@ -52,7 +53,7 @@ type TestResourceStatus struct {
 	v1.ResourceStatus `json:",inline"`
 }
 
-// Implement runtime.Object interface
+// Implement runtime.Object interface.
 func (tr *TestResource) DeepCopyObject() runtime.Object {
 	return tr.DeepCopy()
 }
@@ -93,7 +94,7 @@ func (trp *TestResourceParameters) DeepCopyInto(out *TestResourceParameters) {
 	}
 }
 
-// Test resource constants
+// Test resource constants.
 const (
 	TestResourceKind       = "TestResource"
 	TestResourceAPIVersion = "example.org/v1alpha1"
@@ -104,7 +105,7 @@ var (
 	TestResourceGroupKind    = schema.GroupKind{Group: "example.org", Kind: TestResourceKind}
 )
 
-// AddTestResourceToScheme adds the test resource to the given scheme
+// AddTestResourceToScheme adds the test resource to the given scheme.
 func AddTestResourceToScheme(scheme *runtime.Scheme) {
 	scheme.AddKnownTypes(TestResourceGroupVersion, &TestResource{})
 	metav1.AddToGroupVersion(scheme, TestResourceGroupVersion)
