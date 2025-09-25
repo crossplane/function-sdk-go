@@ -27,9 +27,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/crossplane/function-sdk-go/logging"
-	v1 "github.com/crossplane/function-sdk-go/proto/v1"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,6 +37,10 @@ import (
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/crossplane/function-sdk-go/logging"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
+	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 )
 
 // Default ServeOptions.
@@ -208,13 +209,23 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 
 	// Build interceptors based on options
 	var unaryInterceptors []grpc.UnaryServerInterceptor
+	var serverMetrics *grpcprometheus.ServerMetrics
 
 	// Add metrics interceptor if enabled
 	if so.EnableMetrics {
 		// Use Prometheus metrics
-		metrics := grpcprometheus.NewServerMetrics()
+		serverMetrics = grpcprometheus.NewServerMetrics()
 		// Add unary metrics interceptor (Crossplane Functions only use unary calls)
-		unaryInterceptors = append(unaryInterceptors, metrics.UnaryServerInterceptor())
+		unaryInterceptors = append(unaryInterceptors, serverMetrics.UnaryServerInterceptor())
+
+		// Register the metrics with the appropriate registry
+		if so.MetricsRegistry != nil {
+			// Register with custom registry
+			so.MetricsRegistry.MustRegister(serverMetrics)
+		} else {
+			// Register with default registry
+			prometheus.MustRegister(serverMetrics)
+		}
 	}
 
 	// Add custom interceptors
@@ -234,6 +245,11 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	reflection.Register(srv)
 	v1.RegisterFunctionRunnerServiceServer(srv, fn)
 	v1beta1.RegisterFunctionRunnerServiceServer(srv, ServeBeta(fn))
+
+	// Initialize metrics for the gRPC server if metrics are enabled
+	if so.EnableMetrics && serverMetrics != nil {
+		serverMetrics.InitializeMetrics(srv)
+	}
 
 	if so.HealthServer != nil {
 		healthgrpc.RegisterHealthServer(srv, so.HealthServer)
