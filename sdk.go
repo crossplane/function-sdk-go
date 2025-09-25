@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,11 +37,11 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/proto"
 
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+
 	"github.com/crossplane/function-sdk-go/logging"
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/proto/v1beta1"
-
-	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 )
 
 // Default ServeOptions.
@@ -251,16 +252,16 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 		}
 
 		metricsServer := &http.Server{
-			Addr:    so.MetricsAddress,
-			Handler: handler,
+			Addr:              so.MetricsAddress,
+			Handler:           handler,
+			ReadHeaderTimeout: 30 * time.Second,
 		}
 		so.MetricsServer = metricsServer
 
 		// Start metrics server in a goroutine
 		go func() {
 			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				// Log error but don't fail the main server
-				// In a real implementation, you'd want to use a proper logger
+				_ = errors.Wrap(err, "cannot serve metrics HTTP connections")
 			}
 		}()
 	}
