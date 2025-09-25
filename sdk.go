@@ -27,6 +27,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/crossplane/function-sdk-go/logging"
+	v1 "github.com/crossplane/function-sdk-go/proto/v1"
+	"github.com/crossplane/function-sdk-go/proto/v1beta1"
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,12 +40,6 @@ import (
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/proto"
-
-	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
-
-	"github.com/crossplane/function-sdk-go/logging"
-	v1 "github.com/crossplane/function-sdk-go/proto/v1"
-	"github.com/crossplane/function-sdk-go/proto/v1beta1"
 )
 
 // Default ServeOptions.
