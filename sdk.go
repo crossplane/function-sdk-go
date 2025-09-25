@@ -73,7 +73,6 @@ type ServeOption func(o *ServeOptions) error
 // Listen configures the network, address, and maximum message size on which the
 // Function will listen for RunFunctionRequests.
 func Listen(network, address string) ServeOption {
-	grpc.NewServer()
 	return func(o *ServeOptions) error {
 		o.Network = network
 		o.Address = address
