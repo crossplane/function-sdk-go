@@ -1,6 +1,6 @@
 module github.com/crossplane/function-sdk-go
 
-go 1.24.6
+go 1.24.8
 
 require (
 	github.com/bufbuild/buf v1.42.0
