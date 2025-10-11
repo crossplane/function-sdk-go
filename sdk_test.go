@@ -19,10 +19,18 @@ package function
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 
@@ -186,4 +194,178 @@ type MockFunctionServer struct {
 
 func (s *MockFunctionServer) RunFunction(context.Context, *v1.RunFunctionRequest) (*v1.RunFunctionResponse, error) {
 	return s.rsp, s.err
+}
+
+// TestMetricsServer_WithCustomRegistryAndCustomPort verifies that metrics server starts on custom port with custom registry as input.
+func TestMetricsServer_WithCustomRegistryAndCustomPort(t *testing.T) {
+	// Create mock server
+	mockServer := &MockFunctionServer{
+		rsp: &v1.RunFunctionResponse{
+			Meta: &v1.ResponseMeta{Tag: "traffic-test"},
+		},
+	}
+
+	// Get ports
+	grpcPort := getAvailablePort(t)
+	metricsPort := getAvailablePort(t)
+
+	// Start server
+	serverDone := make(chan error, 1)
+	go func() {
+		err := Serve(mockServer,
+			Listen("tcp", fmt.Sprintf(":%d", grpcPort)),
+			Insecure(true),
+			WithMetricsServer(fmt.Sprintf(":%d", metricsPort)),
+			WithMetricsRegistry(prometheus.NewRegistry()),
+		)
+		serverDone <- err
+	}()
+
+	// Wait for server to start
+	time.Sleep(3 * time.Second)
+
+	t.Run("MetricsServerTest On CustomPort With CustomRegistry", func(t *testing.T) {
+		conn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", grpcPort),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			t.Fatalf("Failed to connect: %v", err)
+		}
+		defer conn.Close()
+
+		client := v1.NewFunctionRunnerServiceClient(conn)
+
+		// Make the request
+		req1 := &v1.RunFunctionRequest{
+			Meta: &v1.RequestMeta{Tag: "request-test"},
+		}
+
+		_, err = client.RunFunction(context.Background(), req1)
+		if err != nil {
+			t.Errorf("request failed: %v", err)
+		}
+		// Wait for metrics to be collected
+		time.Sleep(2 * time.Second)
+
+		// Verify metrics endpoint has our custom metrics
+		metricsURL := fmt.Sprintf("http://localhost:%d/metrics", metricsPort)
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, metricsURL, nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Failed to get metrics: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read metrics: %v", err)
+		}
+
+		metricsContent := string(body)
+
+		// Verify Prometheus format is working
+		if !strings.Contains(metricsContent, "# HELP") {
+			t.Error("Expected Prometheus format")
+		}
+
+		// Verify gRPC metrics are present
+		if !strings.Contains(metricsContent, "grpc_server_started_total") {
+			t.Error("Expected grpc_server_started_total metric to be present")
+		}
+	})
+}
+
+// TestMetricsServer_WithDefaultRegistryAndDefaultPort verifies that metrics server starts by default on :8080 with default registry with no input.
+func TestMetricsServer_WithDefaultRegistryAndDefaultPort(t *testing.T) {
+	// Create mock server
+	mockServer := &MockFunctionServer{
+		rsp: &v1.RunFunctionResponse{
+			Meta: &v1.ResponseMeta{Tag: "default-metrics-test"},
+		},
+	}
+
+	// Get ports
+	grpcPort := getAvailablePort(t)
+	// Should use default metrics port 8080
+	metricsPort := 8080
+
+	serverDone := make(chan error, 1)
+	go func() {
+		err := Serve(mockServer,
+			Listen("tcp", fmt.Sprintf(":%d", grpcPort)),
+			Insecure(true),
+		)
+		serverDone <- err
+	}()
+
+	// Wait for server to start
+	time.Sleep(3 * time.Second)
+
+	t.Run("MetricsServerTest On DefaultPort With DefaultRegisrty", func(t *testing.T) {
+		// Test gRPC connection
+		conn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", grpcPort),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			t.Fatalf("Failed to connect: %v", err)
+		}
+		defer conn.Close()
+
+		client := v1.NewFunctionRunnerServiceClient(conn)
+
+		// Make the request
+		req := &v1.RunFunctionRequest{
+			Meta: &v1.RequestMeta{Tag: "default-metrics-test"},
+		}
+
+		_, err = client.RunFunction(context.Background(), req)
+		if err != nil {
+			t.Errorf("Request failed: %v", err)
+		}
+
+		// Wait for metrics to be collected
+		time.Sleep(2 * time.Second)
+
+		// Verify metrics endpoint is accessible
+		metricsURL := fmt.Sprintf("http://localhost:%d/metrics", metricsPort)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, metricsURL, nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+		resp, err := http.DefaultClient.Do(httpReq)
+		if err != nil {
+			t.Fatalf("Failed to get metrics: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read metrics: %v", err)
+		}
+
+		metricsContent := string(body)
+
+		// Verify metrics are present
+		if !strings.Contains(metricsContent, "# HELP") {
+			t.Error("Expected Prometheus format")
+		}
+
+		// Verify gRPC metrics are present
+		if !strings.Contains(metricsContent, "grpc_server_started_total") {
+			t.Error("Expected grpc_server_started_total metric to be present")
+		}
+	})
+}
+
+// Helper function to get an available port.
+func getAvailablePort(t *testing.T) int {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("Failed to get available port: %v", err)
+	}
+	defer listener.Close()
+	return listener.Addr().(*net.TCPAddr).Port
 }
