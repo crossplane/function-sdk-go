@@ -362,7 +362,8 @@ func TestMetricsServer_WithDefaultRegistryAndDefaultPort(t *testing.T) {
 func getAvailablePort(t *testing.T) int {
 	t.Helper()
 
-	listener, err := net.Listen("tcp", ":0")
+	listenConfig := &net.ListenConfig{}
+	listener, err := listenConfig.Listen(context.Background(), "tcp", ":0")
 	if err != nil {
 		t.Fatalf("Failed to get available port: %v", err)
 	}
