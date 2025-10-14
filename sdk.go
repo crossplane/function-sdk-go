@@ -22,10 +22,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	ginsecure "google.golang.org/grpc/credentials/insecure"
@@ -43,6 +48,7 @@ const (
 	DefaultNetwork        = "tcp"
 	DefaultAddress        = ":9443"
 	DefaultMaxRecvMsgSize = 1024 * 1024 * 4
+	DefaultMetricsAddress = ":8080"
 )
 
 // ServeOptions configure how a Function is served.
@@ -52,6 +58,11 @@ type ServeOptions struct {
 	MaxRecvMsgSize int
 	Credentials    credentials.TransportCredentials
 	HealthServer   healthgrpc.HealthServer
+
+	// Metrics options
+	MetricsAddress    string
+	MetricsRegistry   *prometheus.Registry
+	UnaryInterceptors []grpc.UnaryServerInterceptor
 }
 
 // A ServeOption configures how a Function is served.
@@ -143,13 +154,35 @@ func WithHealthServer(srv healthgrpc.HealthServer) ServeOption {
 	}
 }
 
+// WithMetricsServer configures the metrics server address and starts an HTTP server
+// to expose Prometheus metrics on /metrics endpoint. If address is non-empty,
+// metrics collection is automatically enabled.
+func WithMetricsServer(address string) ServeOption {
+	return func(o *ServeOptions) error {
+		o.MetricsAddress = address
+		return nil
+	}
+}
+
+// WithMetricsRegistry configures a custom Prometheus registry for metrics.
+// Note: Metrics collection is enabled only when MetricsAddress is non-empty.
+func WithMetricsRegistry(registry *prometheus.Registry) ServeOption {
+	return func(o *ServeOptions) error {
+		o.MetricsRegistry = registry
+		return nil
+	}
+}
+
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
 func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
+	//nolint:forcetypeassert // prometheus.DefaultRegisterer is always *prometheus.Registry
 	so := &ServeOptions{
-		Network:        DefaultNetwork,
-		Address:        DefaultAddress,
-		MaxRecvMsgSize: DefaultMaxRecvMsgSize,
+		Network:         DefaultNetwork,
+		Address:         DefaultAddress,
+		MaxRecvMsgSize:  DefaultMaxRecvMsgSize,
+		MetricsAddress:  DefaultMetricsAddress,
+		MetricsRegistry: prometheus.DefaultRegisterer.(*prometheus.Registry), // Use default registry
 	}
 
 	for _, fn := range o {
@@ -167,13 +200,56 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 		return errors.Wrapf(err, "cannot listen for %s connections at address %q", so.Network, so.Address)
 	}
 
-	srv := grpc.NewServer(grpc.MaxRecvMsgSize(so.MaxRecvMsgSize), grpc.Creds(so.Credentials))
+	// Create server options
+	serverOpts := []grpc.ServerOption{
+		grpc.MaxRecvMsgSize(so.MaxRecvMsgSize),
+		grpc.Creds(so.Credentials),
+	}
+
+	// Build interceptors based on options
+	var interceptors []grpc.UnaryServerInterceptor
+	var metrics *grpcprometheus.ServerMetrics
+
+	// Add metrics interceptor if metrics address is provided
+	if so.MetricsAddress != "" {
+		// Use Prometheus metrics
+		metrics = grpcprometheus.NewServerMetrics()
+
+		// Apply metrics interceptor and custom interceptors
+		interceptors = append(interceptors, metrics.UnaryServerInterceptor())
+		interceptors = append(interceptors, so.UnaryInterceptors...)
+		serverOpts = append(serverOpts, grpc.ChainUnaryInterceptor(interceptors...))
+		// Register the metrics with the registry
+		so.MetricsRegistry.MustRegister(metrics)
+	}
+	srv := grpc.NewServer(serverOpts...)
 	reflection.Register(srv)
 	v1.RegisterFunctionRunnerServiceServer(srv, fn)
 	v1beta1.RegisterFunctionRunnerServiceServer(srv, ServeBeta(fn))
 
 	if so.HealthServer != nil {
 		healthgrpc.RegisterHealthServer(srv, so.HealthServer)
+	}
+
+	// Start metrics server if address is provided
+	if so.MetricsAddress != "" {
+		// Initialize metrics for the gRPC server
+		if metrics != nil {
+			metrics.InitializeMetrics(srv)
+		}
+		// Use the registry for metrics handler
+		handler := promhttp.HandlerFor(so.MetricsRegistry, promhttp.HandlerOpts{})
+
+		metricsServer := &http.Server{
+			Addr:              so.MetricsAddress,
+			Handler:           handler,
+			ReadHeaderTimeout: 30 * time.Second,
+		}
+
+		// Start metrics server in a goroutine
+		go func() {
+			_ = metricsServer.ListenAndServe() // Ignore errors
+		}()
 	}
 
 	return errors.Wrap(srv.Serve(lis), "cannot serve mTLS gRPC connections")
