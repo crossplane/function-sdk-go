@@ -195,7 +195,8 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 		return errors.New("no credentials provided - did you specify the Insecure or MTLSCertificates options?")
 	}
 
-	lis, err := net.Listen(so.Network, so.Address)
+	listenConfig := &net.ListenConfig{}
+	lis, err := listenConfig.Listen(context.Background(), so.Network, so.Address)
 	if err != nil {
 		return errors.Wrapf(err, "cannot listen for %s connections at address %q", so.Network, so.Address)
 	}

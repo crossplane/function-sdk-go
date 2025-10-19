@@ -342,6 +342,45 @@ func TestGetRequiredResources(t *testing.T) {
 				},
 			},
 		},
+		"RequiredResourcesNamespaceScoped": {
+			reason: "If the request has required namespace-scoped resources in the new field we should return them.",
+			req: &v1.RunFunctionRequest{
+				RequiredResources: map[string]*v1.Resources{
+					"test-resources": {
+						Items: []*v1.Resource{
+							{
+								Resource: resource.MustStructJSON(`{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind": "TestResource",
+									"metadata": {
+										"name": "test", 
+										"namespace": "test-namespace"
+									}
+								}`),
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				resources: map[string][]resource.Required{
+					"test-resources": {
+						{
+							Resource: &unstructured.Unstructured{
+								Object: map[string]any{
+									"apiVersion": "test.crossplane.io/v1",
+									"kind":       "TestResource",
+									"metadata": map[string]any{
+										"name":      "test",
+										"namespace": "test-namespace",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {

@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package errors is a github.com/pkg/errors compatible API for native errors.
 //
-// Copied over from github.com/crossplane/crossplane-runtime/pkg/errors for
+// Copied over from github.com/crossplane/crossplane-runtime/v2/pkg/errors for
 // better discoverability and possibly diverge in the future.
 package errors
 
