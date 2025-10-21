@@ -63,6 +63,7 @@ type ServeOptions struct {
 	MetricsAddress    string
 	MetricsRegistry   *prometheus.Registry
 	UnaryInterceptors []grpc.UnaryServerInterceptor
+	MetricsServerOpts []grpcprometheus.ServerMetricsOption
 }
 
 // A ServeOption configures how a Function is served.
@@ -173,6 +174,15 @@ func WithMetricsRegistry(registry *prometheus.Registry) ServeOption {
 	}
 }
 
+// WithMetricsServerOpts configures the options for the Metrics Server.
+// Note: Metrics collection is enabled only when MetricsAddress is non-empty.
+func WithMetricsServerOpts(opts ...grpcprometheus.ServerMetricsOption) ServeOption {
+	return func(o *ServeOptions) error {
+		o.MetricsServerOpts = append(o.MetricsServerOpts, opts...)
+		return nil
+	}
+}
+
 // Serve the supplied Function by creating a gRPC server and listening for
 // RunFunctionRequests. Blocks until the server returns an error.
 func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
@@ -214,7 +224,7 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	// Add metrics interceptor if metrics address is provided
 	if so.MetricsAddress != "" {
 		// Use Prometheus metrics
-		metrics = grpcprometheus.NewServerMetrics()
+		metrics = grpcprometheus.NewServerMetrics(so.MetricsServerOpts...)
 
 		// Apply metrics interceptor and custom interceptors
 		interceptors = append(interceptors, metrics.UnaryServerInterceptor())
