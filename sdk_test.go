@@ -28,6 +28,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -303,6 +304,90 @@ func TestMetricsServer_WithDefaultRegistryAndDefaultPort(t *testing.T) {
 	// Wait for server to start
 	time.Sleep(3 * time.Second)
 
+	t.Run("MetricsServerTest On DefaultPort With DefaultRegistry", func(t *testing.T) {
+		// Test gRPC connection
+		conn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", grpcPort),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			t.Fatalf("Failed to connect: %v", err)
+		}
+		defer conn.Close()
+
+		client := v1.NewFunctionRunnerServiceClient(conn)
+
+		// Make the request
+		req := &v1.RunFunctionRequest{
+			Meta: &v1.RequestMeta{Tag: "default-metrics-test"},
+		}
+
+		_, err = client.RunFunction(context.Background(), req)
+		if err != nil {
+			t.Errorf("Request failed: %v", err)
+		}
+
+		// Wait for metrics to be collected
+		time.Sleep(2 * time.Second)
+
+		// Verify metrics endpoint is accessible
+		metricsURL := fmt.Sprintf("http://localhost:%d/metrics", metricsPort)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, metricsURL, nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+		resp, err := http.DefaultClient.Do(httpReq)
+		if err != nil {
+			t.Fatalf("Failed to get metrics: %v", err)
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read metrics: %v", err)
+		}
+
+		metricsContent := string(body)
+
+		// Verify metrics are present
+		if !strings.Contains(metricsContent, "# HELP") {
+			t.Error("Expected Prometheus format")
+		}
+
+		// Verify gRPC metrics are present
+		if !strings.Contains(metricsContent, "grpc_server_started_total") {
+			t.Error("Expected grpc_server_started_total metric to be present")
+		}
+	})
+}
+
+// TestMetricsServer_WithCustomMetricsServerOpts verifies that metrics server uses custom metrics server opts.
+func TestMetricsServer_WithCustomMetricsServerOpts(t *testing.T) {
+	// Create mock server
+	mockServer := &MockFunctionServer{
+		rsp: &v1.RunFunctionResponse{
+			Meta: &v1.ResponseMeta{Tag: "default-metrics-test"},
+		},
+	}
+
+	// Get ports
+	grpcPort := getAvailablePort(t)
+	// Should use default metrics port 8080
+	metricsPort := 8080
+
+	serverDone := make(chan error, 1)
+	go func() {
+		err := Serve(mockServer,
+			Listen("tcp", fmt.Sprintf(":%d", grpcPort)),
+			Insecure(true),
+			WithMetricsServerOpts(
+				grpcprometheus.WithServerHandlingTimeHistogram(),
+			),
+		)
+		serverDone <- err
+	}()
+
+	// Wait for server to start
+	time.Sleep(3 * time.Second)
+
 	t.Run("MetricsServerTest On DefaultPort With DefaultRegisrty", func(t *testing.T) {
 		// Test gRPC connection
 		conn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", grpcPort),
@@ -354,6 +439,11 @@ func TestMetricsServer_WithDefaultRegistryAndDefaultPort(t *testing.T) {
 		// Verify gRPC metrics are present
 		if !strings.Contains(metricsContent, "grpc_server_started_total") {
 			t.Error("Expected grpc_server_started_total metric to be present")
+		}
+
+		// Verify gRPC Histogram metrics are present
+		if !strings.Contains(metricsContent, "grpc_server_handling_seconds_bucket") {
+			t.Error("Expected grpc_server_handling_seconds_bucket metric to be present")
 		}
 	})
 }
