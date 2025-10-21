@@ -178,7 +178,7 @@ func WithMetricsRegistry(registry *prometheus.Registry) ServeOption {
 // Note: Metrics collection is enabled only when MetricsAddress is non-empty.
 func WithMetricsServerOpts(opts ...grpcprometheus.ServerMetricsOption) ServeOption {
 	return func(o *ServeOptions) error {
-		o.MetricsServerOpts = opts
+		o.MetricsServerOpts = append(o.MetricsServerOpts, opts...)
 		return nil
 	}
 }
@@ -188,12 +188,11 @@ func WithMetricsServerOpts(opts ...grpcprometheus.ServerMetricsOption) ServeOpti
 func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	//nolint:forcetypeassert // prometheus.DefaultRegisterer is always *prometheus.Registry
 	so := &ServeOptions{
-		Network:           DefaultNetwork,
-		Address:           DefaultAddress,
-		MaxRecvMsgSize:    DefaultMaxRecvMsgSize,
-		MetricsAddress:    DefaultMetricsAddress,
-		MetricsRegistry:   prometheus.DefaultRegisterer.(*prometheus.Registry), // Use default registry
-		MetricsServerOpts: make([]grpcprometheus.ServerMetricsOption, 0),
+		Network:         DefaultNetwork,
+		Address:         DefaultAddress,
+		MaxRecvMsgSize:  DefaultMaxRecvMsgSize,
+		MetricsAddress:  DefaultMetricsAddress,
+		MetricsRegistry: prometheus.DefaultRegisterer.(*prometheus.Registry), // Use default registry
 	}
 
 	for _, fn := range o {

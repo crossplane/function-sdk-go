@@ -370,14 +370,15 @@ func TestMetricsServer_WithCustomMetricsServerOpts(t *testing.T) {
 
 	// Get ports
 	grpcPort := getAvailablePort(t)
-	// Should use default metrics port 8080
-	metricsPort := 8080
+	metricsPort := getAvailablePort(t)
 
 	serverDone := make(chan error, 1)
 	go func() {
 		err := Serve(mockServer,
 			Listen("tcp", fmt.Sprintf(":%d", grpcPort)),
 			Insecure(true),
+			WithMetricsServer(fmt.Sprintf(":%d", metricsPort)),
+			WithMetricsRegistry(prometheus.NewRegistry()),
 			WithMetricsServerOpts(
 				grpcprometheus.WithServerHandlingTimeHistogram(),
 			),
@@ -388,7 +389,7 @@ func TestMetricsServer_WithCustomMetricsServerOpts(t *testing.T) {
 	// Wait for server to start
 	time.Sleep(3 * time.Second)
 
-	t.Run("MetricsServerTest On DefaultPort With DefaultRegisrty", func(t *testing.T) {
+	t.Run("MetricsServerTest with custom metrics server opts", func(t *testing.T) {
 		// Test gRPC connection
 		conn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", grpcPort),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
