@@ -11,7 +11,7 @@ on:
 env:
   # Common versions
   GO_VERSION: '1.24.8'
-  GOLANGCI_VERSION: 'v2.4.0'
+  GOLANGCI_VERSION: 'v2.7.2'
 
 jobs:
   check-diff:
