@@ -29,10 +29,10 @@ import (
 // without depending on any specific provider.
 type TestResource struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   TestResourceSpec   `json:"spec"`
-	Status TestResourceStatus `json:"status,omitempty"`
+	Status TestResourceStatus `json:"status,omitzero"`
 }
 
 // TestResourceSpec defines the desired state of TestResource.

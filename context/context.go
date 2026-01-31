@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // Package context contains utilities for working with Function context.
-package context
+package context //nolint:revive // local sdk package
 
 // Well-known context keys.
 const (
