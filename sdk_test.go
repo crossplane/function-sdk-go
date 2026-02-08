@@ -17,7 +17,9 @@ limitations under the License.
 package function
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -108,8 +110,15 @@ func Example() {
 			TargetCompositeAndClaim()
 	}
 
+	// protojson.Marshal injects random whitespace based on a hash of the
+	// message descriptor. The whitespace changes whenever the proto is
+	// regenerated (e.g. adding new fields), which breaks Example test output
+	// matching. Compact the JSON to strip optional whitespace so the test is
+	// stable across proto regenerations.
 	j, _ := protojson.Marshal(rsp)
-	fmt.Println(string(j))
+	var buf bytes.Buffer
+	json.Compact(&buf, j) //nolint:errcheck // Example test.
+	fmt.Println(buf.String())
 
 	// Output:
 	// {"meta":{"ttl":"60s"},"desired":{"resources":{"new":{"resource":{"apiVersion":"example.org/v1","kind":"CoolResource","metadata":{"labels":{"coolness":"high"}},"spec":{"widgets":9001}}}}},"conditions":[{"type":"FunctionSuccess","status":"STATUS_CONDITION_TRUE","reason":"Success","target":"TARGET_COMPOSITE_AND_CLAIM"}]}
