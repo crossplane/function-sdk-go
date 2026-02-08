@@ -117,7 +117,7 @@ func Example() {
 	// stable across proto regenerations.
 	j, _ := protojson.Marshal(rsp)
 	var buf bytes.Buffer
-	json.Compact(&buf, j) //nolint:errcheck // Example test.
+	json.Compact(&buf, j)
 	fmt.Println(buf.String())
 
 	// Output:

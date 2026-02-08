@@ -164,9 +164,9 @@ func AdvertisesCapabilities(req *v1.RunFunctionRequest) bool {
 // Use AdvertisesCapabilities to check whether
 // Crossplane advertises its capabilities at all. If it doesn't, HasCapability
 // always returns false even for features the older Crossplane does support.
-func HasCapability(req *v1.RunFunctionRequest, cap v1.Capability) bool {
+func HasCapability(req *v1.RunFunctionRequest, capability v1.Capability) bool {
 	for _, c := range req.GetMeta().GetCapabilities() {
-		if c == cap {
+		if c == capability {
 			return true
 		}
 	}

@@ -139,7 +139,7 @@ func SetDesiredResources(rsp *v1.RunFunctionResponse, drs map[resource.Name]*uns
 // If Crossplane cannot find a schema for the requested kind, the schema will be
 // empty (GetRequiredSchema will return nil).
 func RequireSchema(rsp *v1.RunFunctionResponse, name, apiVersion, kind string) {
-	if rsp.Requirements == nil {
+	if rsp.GetRequirements() == nil {
 		rsp.Requirements = &v1.Requirements{}
 	}
 	if rsp.Requirements.Schemas == nil {
