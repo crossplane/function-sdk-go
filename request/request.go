@@ -147,6 +147,49 @@ func GetExtraResources(req *v1.RunFunctionRequest) (map[string][]resource.Requir
 	return out, nil
 }
 
+// AdvertisesCapabilities returns true if Crossplane advertises its capabilities
+// in the request metadata. Crossplane v2.2 and later advertise capabilities. If
+// this returns false, the calling Crossplane predates capability advertisement
+// and HasCapability will always return False, even for features the older
+// Crossplane does support.
+func AdvertisesCapabilities(req *v1.RunFunctionRequest) bool {
+	return HasCapability(req, v1.Capability_CAPABILITY_CAPABILITIES)
+}
+
+// HasCapability returns true if Crossplane advertises the supplied capability
+// in the request metadata. Functions can use this to determine whether
+// Crossplane will honor certain fields in their response, or populate certain
+// fields in their request.
+//
+// Use AdvertisesCapabilities to check whether
+// Crossplane advertises its capabilities at all. If it doesn't, HasCapability
+// always returns false even for features the older Crossplane does support.
+func HasCapability(req *v1.RunFunctionRequest, cap v1.Capability) bool {
+	for _, c := range req.GetMeta().GetCapabilities() {
+		if c == cap {
+			return true
+		}
+	}
+	return false
+}
+
+// GetRequiredSchema from the supplied request. Returns the OpenAPI v3 schema as
+// a protobuf Struct, or nil if the schema was not found. Returns nil both when
+// Crossplane has not yet resolved the requirement and when it was resolved but
+// the schema wasn't found. To distinguish between these cases, check whether
+// the name exists in req.GetRequiredSchemas().
+func GetRequiredSchema(req *v1.RunFunctionRequest, name string) *structpb.Struct {
+	schemas := req.GetRequiredSchemas()
+	if schemas == nil {
+		return nil
+	}
+	s, ok := schemas[name]
+	if !ok {
+		return nil
+	}
+	return s.GetOpenapiV3()
+}
+
 // GetCredentials from the supplied request.
 func GetCredentials(req *v1.RunFunctionRequest, name string) (resource.Credentials, error) {
 	cred, exists := req.GetCredentials()[name]

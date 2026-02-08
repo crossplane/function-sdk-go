@@ -130,6 +130,27 @@ func SetDesiredResources(rsp *v1.RunFunctionResponse, drs map[resource.Name]*uns
 	return nil
 }
 
+// RequireSchema adds a schema requirement to the response. This tells
+// Crossplane to fetch the OpenAPI schema for the specified resource kind and
+// include it in the next request's required_schemas field. Use
+// request.GetRequiredSchema to retrieve the resolved schema.
+//
+// For CRDs, Crossplane returns the spec.versions[].schema.openAPIV3Schema field.
+// If Crossplane cannot find a schema for the requested kind, the schema will be
+// empty (GetRequiredSchema will return nil).
+func RequireSchema(rsp *v1.RunFunctionResponse, name, apiVersion, kind string) {
+	if rsp.Requirements == nil {
+		rsp.Requirements = &v1.Requirements{}
+	}
+	if rsp.Requirements.Schemas == nil {
+		rsp.Requirements.Schemas = make(map[string]*v1.SchemaSelector)
+	}
+	rsp.Requirements.Schemas[name] = &v1.SchemaSelector{
+		ApiVersion: apiVersion,
+		Kind:       kind,
+	}
+}
+
 // SetOutput sets the function's output. The supplied output must be marshalable
 // as JSON. Only operation functions support setting output. If a composition
 // function sets output it'll be ignored.
