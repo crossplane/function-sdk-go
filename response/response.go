@@ -137,7 +137,7 @@ func SetDesiredResources(rsp *v1.RunFunctionResponse, drs map[resource.Name]*uns
 //
 // For CRDs, Crossplane returns the spec.versions[].schema.openAPIV3Schema field.
 // If Crossplane cannot find a schema for the requested kind, the schema will be
-// empty (GetRequiredSchema will return nil).
+// empty (GetRequiredSchema will return nil with ok true).
 func RequireSchema(rsp *v1.RunFunctionResponse, name, apiVersion, kind string) {
 	if rsp.GetRequirements() == nil {
 		rsp.Requirements = &v1.Requirements{}
