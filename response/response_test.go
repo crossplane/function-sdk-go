@@ -154,6 +154,82 @@ func TestOutput(t *testing.T) {
 	}
 }
 
+func TestRequireSchema(t *testing.T) {
+	type args struct {
+		rsp        *v1.RunFunctionResponse
+		name       string
+		apiVersion string
+		kind       string
+	}
+	type want struct {
+		rsp *v1.RunFunctionResponse
+	}
+	cases := map[string]struct {
+		args args
+		want want
+	}{
+		"NewRequirement": {
+			args: args{
+				rsp:        &v1.RunFunctionResponse{},
+				name:       "xr-schema",
+				apiVersion: "example.org/v1",
+				kind:       "MyResource",
+			},
+			want: want{
+				rsp: &v1.RunFunctionResponse{
+					Requirements: &v1.Requirements{
+						Schemas: map[string]*v1.SchemaSelector{
+							"xr-schema": {
+								ApiVersion: "example.org/v1",
+								Kind:       "MyResource",
+							},
+						},
+					},
+				},
+			},
+		},
+		"ExistingRequirements": {
+			args: args{
+				rsp: &v1.RunFunctionResponse{
+					Requirements: &v1.Requirements{
+						Resources: map[string]*v1.ResourceSelector{
+							"existing": {ApiVersion: "v1", Kind: "ConfigMap"},
+						},
+					},
+				},
+				name:       "xr-schema",
+				apiVersion: "example.org/v1",
+				kind:       "MyResource",
+			},
+			want: want{
+				rsp: &v1.RunFunctionResponse{
+					Requirements: &v1.Requirements{
+						Resources: map[string]*v1.ResourceSelector{
+							"existing": {ApiVersion: "v1", Kind: "ConfigMap"},
+						},
+						Schemas: map[string]*v1.SchemaSelector{
+							"xr-schema": {
+								ApiVersion: "example.org/v1",
+								Kind:       "MyResource",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			RequireSchema(tc.args.rsp, tc.args.name, tc.args.apiVersion, tc.args.kind)
+
+			if diff := cmp.Diff(tc.want.rsp, tc.args.rsp, protocmp.Transform()); diff != "" {
+				t.Errorf("RequireSchema(...): -want rsp, +got rsp:\n%s", diff)
+			}
+		})
+	}
+}
+
 func MustUnstructJSON(j string) *unstructured.Unstructured {
 	u := &unstructured.Unstructured{}
 	if err := json.Unmarshal([]byte(j), u); err != nil {

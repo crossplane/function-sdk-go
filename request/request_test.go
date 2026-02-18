@@ -21,6 +21,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
@@ -353,7 +355,7 @@ func TestGetRequiredResources(t *testing.T) {
 									"apiVersion": "test.crossplane.io/v1",
 									"kind": "TestResource",
 									"metadata": {
-										"name": "test", 
+										"name": "test",
 										"namespace": "test-namespace"
 									}
 								}`),
@@ -459,6 +461,293 @@ func TestGetExtraResources(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.err, err); diff != "" {
 				t.Errorf("\n%s\nGetExtraResources(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestGetRequiredResource(t *testing.T) {
+	type want struct {
+		resources []resource.Required
+		ok        bool
+		err       error
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		name   string
+		want   want
+	}{
+		"NoRequiredResources": {
+			reason: "If the request has no required resources we should return nil and false.",
+			req:    &v1.RunFunctionRequest{},
+			name:   "test",
+			want:   want{ok: false},
+		},
+		"ResourceNotRequested": {
+			reason: "If the named resource was not requested we should return nil and false.",
+			req: &v1.RunFunctionRequest{
+				RequiredResources: map[string]*v1.Resources{
+					"other": {
+						Items: []*v1.Resource{{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1",
+								"kind": "TestResource"
+							}`),
+						}},
+					},
+				},
+			},
+			name: "test",
+			want: want{ok: false},
+		},
+		"ResourceFound": {
+			reason: "If the named resource was found we should return it with ok true.",
+			req: &v1.RunFunctionRequest{
+				RequiredResources: map[string]*v1.Resources{
+					"test": {
+						Items: []*v1.Resource{{
+							Resource: resource.MustStructJSON(`{
+								"apiVersion": "test.crossplane.io/v1",
+								"kind": "TestResource",
+								"metadata": {"name": "test"}
+							}`),
+						}},
+					},
+				},
+			},
+			name: "test",
+			want: want{
+				resources: []resource.Required{
+					{
+						Resource: &unstructured.Unstructured{
+							Object: map[string]any{
+								"apiVersion": "test.crossplane.io/v1",
+								"kind":       "TestResource",
+								"metadata":   map[string]any{"name": "test"},
+							},
+						},
+					},
+				},
+				ok: true,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			resources, ok, err := GetRequiredResource(tc.req, tc.name)
+
+			if diff := cmp.Diff(tc.want.resources, resources); diff != "" {
+				t.Errorf("\n%s\nGetRequiredResource(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.ok, ok); diff != "" {
+				t.Errorf("\n%s\nGetRequiredResource(...) ok: -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.err, err); diff != "" {
+				t.Errorf("\n%s\nGetRequiredResource(...): -want error, +got error:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestGetRequiredSchemas(t *testing.T) {
+	schema := resource.MustStructJSON(`{"type": "object", "properties": {"spec": {"type": "object"}}}`)
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		want   map[string]*structpb.Struct
+	}{
+		"NoRequiredSchemas": {
+			reason: "If the request has no required schemas we should return an empty map.",
+			req:    &v1.RunFunctionRequest{},
+			want:   map[string]*structpb.Struct{},
+		},
+		"RequiredSchemas": {
+			reason: "If the request has required schemas we should return them.",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"test": {OpenapiV3: schema},
+				},
+			},
+			want: map[string]*structpb.Struct{
+				"test": schema,
+			},
+		},
+		"ResolvedButNotFound": {
+			reason: "A schema resolved but not found should appear at nil in the output map",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"test": {},
+				},
+			},
+			want: map[string]*structpb.Struct{
+				"test": nil,
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := GetRequiredSchemas(tc.req)
+
+			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
+				t.Errorf("\n%s\nGetRequiredSchemas(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestGetRequiredSchema(t *testing.T) {
+	schema := resource.MustStructJSON(`{"type": "object", "properties": {"spec": {"type": "object"}}}`)
+
+	type want struct {
+		schema *structpb.Struct
+		ok     bool
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		name   string
+		want   want
+	}{
+		"NoRequiredSchemas": {
+			reason: "If the request has no required schemas we should return nil and false.",
+			req:    &v1.RunFunctionRequest{},
+			name:   "test",
+			want:   want{ok: false},
+		},
+		"SchemaNotRequested": {
+			reason: "If the named schema was not requested we should return nil and false.",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"other": {OpenapiV3: schema},
+				},
+			},
+			name: "test",
+			want: want{ok: false},
+		},
+		"SchemaResolvedButNotFound": {
+			reason: "If Crossplane resolved the requirement but found no schema we should return nil and true.",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"test": {},
+				},
+			},
+			name: "test",
+			want: want{ok: true},
+		},
+		"SchemaFound": {
+			reason: "If the schema was found we should return it with ok true.",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"test": {OpenapiV3: schema},
+				},
+			},
+			name: "test",
+			want: want{schema: schema, ok: true},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got, ok := GetRequiredSchema(tc.req, tc.name)
+
+			if diff := cmp.Diff(tc.want.schema, got, protocmp.Transform()); diff != "" {
+				t.Errorf("\n%s\nGetRequiredSchema(...): -want, +got:\n%s", tc.reason, diff)
+			}
+			if diff := cmp.Diff(tc.want.ok, ok); diff != "" {
+				t.Errorf("\n%s\nGetRequiredSchema(...) ok: -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestAdvertisesCapabilities(t *testing.T) {
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		want   bool
+	}{
+		"NoMeta": {
+			reason: "If the request has no metadata we should return false.",
+			req:    &v1.RunFunctionRequest{},
+			want:   false,
+		},
+		"NoCapabilities": {
+			reason: "If the request has metadata but no capabilities we should return false.",
+			req:    &v1.RunFunctionRequest{Meta: &v1.RequestMeta{}},
+			want:   false,
+		},
+		"HasCapabilityCapabilities": {
+			reason: "If the request advertises CAPABILITY_CAPABILITIES we should return true.",
+			req: &v1.RunFunctionRequest{
+				Meta: &v1.RequestMeta{
+					Capabilities: []v1.Capability{v1.Capability_CAPABILITY_CAPABILITIES},
+				},
+			},
+			want: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := AdvertisesCapabilities(tc.req)
+
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("\n%s\nAdvertisesCapabilities(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestHasCapability(t *testing.T) {
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		cap    v1.Capability
+		want   bool
+	}{
+		"NoMeta": {
+			reason: "If the request has no metadata we should return false.",
+			req:    &v1.RunFunctionRequest{},
+			cap:    v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+			want:   false,
+		},
+		"CapabilityAbsent": {
+			reason: "If the capability is not advertised we should return false.",
+			req: &v1.RunFunctionRequest{
+				Meta: &v1.RequestMeta{
+					Capabilities: []v1.Capability{v1.Capability_CAPABILITY_CAPABILITIES},
+				},
+			},
+			cap:  v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+			want: false,
+		},
+		"CapabilityPresent": {
+			reason: "If the capability is advertised we should return true.",
+			req: &v1.RunFunctionRequest{
+				Meta: &v1.RequestMeta{
+					Capabilities: []v1.Capability{
+						v1.Capability_CAPABILITY_CAPABILITIES,
+						v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+					},
+				},
+			},
+			cap:  v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+			want: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := HasCapability(tc.req, tc.cap)
+
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("\n%s\nHasCapability(...): -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}

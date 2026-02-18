@@ -18,6 +18,8 @@ limitations under the License.
 package request
 
 import (
+	"slices"
+
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -129,6 +131,27 @@ func GetRequiredResources(req *v1.RunFunctionRequest) (map[string][]resource.Req
 	return out, nil
 }
 
+// GetRequiredResource from the supplied request by name. The bool return value
+// indicates whether Crossplane has resolved the requirement.
+func GetRequiredResource(req *v1.RunFunctionRequest, name string) ([]resource.Required, bool, error) {
+	if req.GetRequiredResources() == nil {
+		return nil, false, nil
+	}
+	rrs, ok := req.GetRequiredResources()[name]
+	if !ok {
+		return nil, false, nil
+	}
+	out := make([]resource.Required, 0, len(rrs.GetItems()))
+	for _, i := range rrs.GetItems() {
+		r := &resource.Required{Resource: &unstructured.Unstructured{}}
+		if err := resource.AsObject(i.GetResource(), r.Resource); err != nil {
+			return nil, true, err
+		}
+		out = append(out, *r)
+	}
+	return out, true, nil
+}
+
 // GetExtraResources from the supplied request using the deprecated extra_resources field.
 //
 // Deprecated: Use GetRequiredResources.
@@ -145,6 +168,54 @@ func GetExtraResources(req *v1.RunFunctionRequest) (map[string][]resource.Requir
 		}
 	}
 	return out, nil
+}
+
+// AdvertisesCapabilities returns true if Crossplane advertises its capabilities
+// in the request metadata. Crossplane v2.2 and later advertise capabilities. If
+// this returns false, the calling Crossplane predates capability advertisement
+// and HasCapability will always return false, even for features the older
+// Crossplane does support.
+func AdvertisesCapabilities(req *v1.RunFunctionRequest) bool {
+	return HasCapability(req, v1.Capability_CAPABILITY_CAPABILITIES)
+}
+
+// HasCapability returns true if Crossplane advertises the supplied capability
+// in the request metadata. Functions can use this to determine whether
+// Crossplane will honor certain fields in their response, or populate certain
+// fields in their request.
+//
+// Use AdvertisesCapabilities to check whether Crossplane advertises its
+// capabilities at all. If it doesn't, HasCapability always returns false even
+// for features the older Crossplane does support.
+func HasCapability(req *v1.RunFunctionRequest, c v1.Capability) bool {
+	return slices.Contains(req.GetMeta().GetCapabilities(), c)
+}
+
+// GetRequiredSchemas from the supplied request. Returns all resolved schemas as
+// a map of name to OpenAPI v3 schema protobuf Struct.
+func GetRequiredSchemas(req *v1.RunFunctionRequest) map[string]*structpb.Struct {
+	out := make(map[string]*structpb.Struct, len(req.GetRequiredSchemas()))
+	for name, s := range req.GetRequiredSchemas() {
+		out[name] = s.GetOpenapiV3()
+	}
+	return out
+}
+
+// GetRequiredSchema from the supplied request. Returns the OpenAPI v3 schema as
+// a protobuf Struct. The bool return value indicates whether Crossplane has
+// resolved the requirement. When ok is false, the schema was not yet resolved.
+// When ok is true but the returned struct is nil, the schema was resolved but
+// not found.
+func GetRequiredSchema(req *v1.RunFunctionRequest, name string) (schema *structpb.Struct, ok bool) {
+	schemas := req.GetRequiredSchemas()
+	if schemas == nil {
+		return nil, false
+	}
+	s, ok := schemas[name]
+	if !ok {
+		return nil, false
+	}
+	return s.GetOpenapiV3(), true
 }
 
 // GetCredentials from the supplied request.
