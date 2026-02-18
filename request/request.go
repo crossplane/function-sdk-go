@@ -173,7 +173,7 @@ func GetExtraResources(req *v1.RunFunctionRequest) (map[string][]resource.Requir
 // AdvertisesCapabilities returns true if Crossplane advertises its capabilities
 // in the request metadata. Crossplane v2.2 and later advertise capabilities. If
 // this returns false, the calling Crossplane predates capability advertisement
-// and HasCapability will always return False, even for features the older
+// and HasCapability will always return false, even for features the older
 // Crossplane does support.
 func AdvertisesCapabilities(req *v1.RunFunctionRequest) bool {
 	return HasCapability(req, v1.Capability_CAPABILITY_CAPABILITIES)

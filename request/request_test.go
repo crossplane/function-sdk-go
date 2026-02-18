@@ -355,7 +355,7 @@ func TestGetRequiredResources(t *testing.T) {
 									"apiVersion": "test.crossplane.io/v1",
 									"kind": "TestResource",
 									"metadata": {
-										"name": "test", 
+										"name": "test",
 										"namespace": "test-namespace"
 									}
 								}`),
@@ -574,6 +574,17 @@ func TestGetRequiredSchemas(t *testing.T) {
 			},
 			want: map[string]*structpb.Struct{
 				"test": schema,
+			},
+		},
+		"ResolvedButNotFound": {
+			reason: "A schema resolved but not found should appear at nil in the output map",
+			req: &v1.RunFunctionRequest{
+				RequiredSchemas: map[string]*v1.Schema{
+					"test": {},
+				},
+			},
+			want: map[string]*structpb.Struct{
+				"test": nil,
 			},
 		},
 	}
