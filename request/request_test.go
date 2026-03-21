@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package request contains utilities for working with RunFunctionRequests.
 package request
 
 import (

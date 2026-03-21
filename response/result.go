@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package response contains utilities for working with RunFunctionResponses.
 package response
 
 import (
