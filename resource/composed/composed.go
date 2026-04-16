@@ -18,12 +18,12 @@ limitations under the License.
 package composed
 
 import (
+	xpv2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/go-json-experiment/json"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 
@@ -157,18 +157,18 @@ func (cd *Unstructured) MarshalJSON() ([]byte, error) {
 }
 
 // GetCondition of this Composed resource.
-func (cd *Unstructured) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
-	conditioned := xpv1.ConditionedStatus{}
+func (cd *Unstructured) GetCondition(ct xpv2.ConditionType) xpv2.Condition {
+	conditioned := xpv2.ConditionedStatus{}
 	// The path is directly `status` because conditions are inline.
 	if err := fieldpath.Pave(cd.Object).GetValueInto("status", &conditioned); err != nil {
-		return xpv1.Condition{}
+		return xpv2.Condition{}
 	}
 	return conditioned.GetCondition(ct)
 }
 
 // SetConditions of this Composed resource.
-func (cd *Unstructured) SetConditions(c ...xpv1.Condition) {
-	conditioned := xpv1.ConditionedStatus{}
+func (cd *Unstructured) SetConditions(c ...xpv2.Condition) {
+	conditioned := xpv2.ConditionedStatus{}
 	// The path is directly `status` because conditions are inline.
 	_ = fieldpath.Pave(cd.Object).GetValueInto("status", &conditioned)
 	conditioned.SetConditions(c...)
@@ -176,8 +176,8 @@ func (cd *Unstructured) SetConditions(c ...xpv1.Condition) {
 }
 
 // GetWriteConnectionSecretToReference of this Composed resource.
-func (cd *Unstructured) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
-	out := &xpv1.SecretReference{}
+func (cd *Unstructured) GetWriteConnectionSecretToReference() *xpv2.SecretReference {
+	out := &xpv2.SecretReference{}
 	if err := fieldpath.Pave(cd.Object).GetValueInto("spec.writeConnectionSecretToRef", out); err != nil {
 		return nil
 	}
@@ -185,7 +185,7 @@ func (cd *Unstructured) GetWriteConnectionSecretToReference() *xpv1.SecretRefere
 }
 
 // SetWriteConnectionSecretToReference of this Composed resource.
-func (cd *Unstructured) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+func (cd *Unstructured) SetWriteConnectionSecretToReference(r *xpv2.SecretReference) {
 	_ = fieldpath.Pave(cd.Object).SetValue("spec.writeConnectionSecretToRef", r)
 }
 
@@ -277,7 +277,7 @@ func (cd *Unstructured) SetInteger(path string, value int64) error {
 
 // SetObservedGeneration of this Composed resource.
 func (cd *Unstructured) SetObservedGeneration(generation int64) {
-	status := &xpv1.ObservedStatus{}
+	status := &xpv2.ObservedStatus{}
 	_ = fieldpath.Pave(cd.Object).GetValueInto("status", status)
 	status.SetObservedGeneration(generation)
 	_ = fieldpath.Pave(cd.Object).SetValue("status.observedGeneration", status.ObservedGeneration)
@@ -285,7 +285,7 @@ func (cd *Unstructured) SetObservedGeneration(generation int64) {
 
 // GetObservedGeneration of this Composed resource.
 func (cd *Unstructured) GetObservedGeneration() int64 {
-	status := &xpv1.ObservedStatus{}
+	status := &xpv2.ObservedStatus{}
 	_ = fieldpath.Pave(cd.Object).GetValueInto("status", status)
 	return status.GetObservedGeneration()
 }
