@@ -21,13 +21,13 @@ limitations under the License.
 package composite
 
 import (
+	xpv2 "github.com/crossplane/crossplane/apis/v2/core/v2"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/resource/unstructured/reference"
@@ -134,17 +134,17 @@ func (xr *Unstructured) SetCompositionRevisionSelector(sel *metav1.LabelSelector
 }
 
 // SetCompositionUpdatePolicy of this composite resource.
-func (xr *Unstructured) SetCompositionUpdatePolicy(p *xpv1.UpdatePolicy) {
+func (xr *Unstructured) SetCompositionUpdatePolicy(p *xpv2.UpdatePolicy) {
 	_ = fieldpath.Pave(xr.Object).SetValue("spec.compositionUpdatePolicy", p)
 }
 
 // GetCompositionUpdatePolicy of this composite resource.
-func (xr *Unstructured) GetCompositionUpdatePolicy() *xpv1.UpdatePolicy {
+func (xr *Unstructured) GetCompositionUpdatePolicy() *xpv2.UpdatePolicy {
 	p, err := fieldpath.Pave(xr.Object).GetString("spec.compositionUpdatePolicy")
 	if err != nil {
 		return nil
 	}
-	out := xpv1.UpdatePolicy(p)
+	out := xpv2.UpdatePolicy(p)
 	return &out
 }
 
@@ -185,8 +185,8 @@ func (xr *Unstructured) SetResourceReferences(refs []corev1.ObjectReference) {
 }
 
 // GetWriteConnectionSecretToReference of this composite resource.
-func (xr *Unstructured) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
-	out := &xpv1.SecretReference{}
+func (xr *Unstructured) GetWriteConnectionSecretToReference() *xpv2.SecretReference {
+	out := &xpv2.SecretReference{}
 	if err := fieldpath.Pave(xr.Object).GetValueInto("spec.writeConnectionSecretToRef", out); err != nil {
 		return nil
 	}
@@ -194,23 +194,23 @@ func (xr *Unstructured) GetWriteConnectionSecretToReference() *xpv1.SecretRefere
 }
 
 // SetWriteConnectionSecretToReference of this composite resource.
-func (xr *Unstructured) SetWriteConnectionSecretToReference(ref *xpv1.SecretReference) {
+func (xr *Unstructured) SetWriteConnectionSecretToReference(ref *xpv2.SecretReference) {
 	_ = fieldpath.Pave(xr.Object).SetValue("spec.writeConnectionSecretToRef", ref)
 }
 
 // GetCondition of this composite resource.
-func (xr *Unstructured) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
-	conditioned := xpv1.ConditionedStatus{}
+func (xr *Unstructured) GetCondition(ct xpv2.ConditionType) xpv2.Condition {
+	conditioned := xpv2.ConditionedStatus{}
 	// The path is directly `status` because conditions are inline.
 	if err := fieldpath.Pave(xr.Object).GetValueInto("status", &conditioned); err != nil {
-		return xpv1.Condition{}
+		return xpv2.Condition{}
 	}
 	return conditioned.GetCondition(ct)
 }
 
 // SetConditions of this composite resource.
-func (xr *Unstructured) SetConditions(conditions ...xpv1.Condition) {
-	conditioned := xpv1.ConditionedStatus{}
+func (xr *Unstructured) SetConditions(conditions ...xpv2.Condition) {
+	conditioned := xpv2.ConditionedStatus{}
 	// The path is directly `status` because conditions are inline.
 	_ = fieldpath.Pave(xr.Object).GetValueInto("status", &conditioned)
 	conditioned.SetConditions(conditions...)
@@ -340,7 +340,7 @@ func (xr *Unstructured) SetInteger(path string, value int64) error {
 
 // SetObservedGeneration of this Composite resource.
 func (xr *Unstructured) SetObservedGeneration(generation int64) {
-	status := &xpv1.ObservedStatus{}
+	status := &xpv2.ObservedStatus{}
 	_ = fieldpath.Pave(xr.Object).GetValueInto("status", status)
 	status.SetObservedGeneration(generation)
 	_ = fieldpath.Pave(xr.Object).SetValue("status.observedGeneration", status.ObservedGeneration)
@@ -348,7 +348,7 @@ func (xr *Unstructured) SetObservedGeneration(generation int64) {
 
 // GetObservedGeneration of this Composite resource.
 func (xr *Unstructured) GetObservedGeneration() int64 {
-	status := &xpv1.ObservedStatus{}
+	status := &xpv2.ObservedStatus{}
 	_ = fieldpath.Pave(xr.Object).GetValueInto("status", status)
 	return status.GetObservedGeneration()
 }
