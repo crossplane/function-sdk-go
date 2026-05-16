@@ -267,8 +267,8 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 }
 
 // NewLogger returns a new logger.
-func NewLogger(debug bool) (logging.Logger, error) {
-	return logging.NewLogger(debug)
+func NewLogger(debug, timeEncodeISO8601 bool, addCallerSkip ...int) (logging.Logger, error) {
+	return logging.NewLogger(debug, timeEncodeISO8601, addCallerSkip...)
 }
 
 // A BetaServer is a v1beta1 FunctionRunnerServiceServer that wraps an identical
