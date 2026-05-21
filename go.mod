@@ -4,8 +4,8 @@ go 1.25.9
 
 require (
 	github.com/bufbuild/buf v1.69.0
-	github.com/crossplane/crossplane-runtime/v2 v2.3.0-rc.0.0.20260416145853-f43d88270996
-	github.com/crossplane/crossplane/apis/v2 v2.0.0-20260415071903-2b072b20c4bd
+	github.com/crossplane/crossplane-runtime/v2 v2.3.0
+	github.com/crossplane/crossplane/apis/v2 v2.0.0-20260424160951-8f231230ebb6
 	github.com/go-json-experiment/json v0.0.0-20240815175050-ebd3a8989ca1
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
