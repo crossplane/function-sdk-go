@@ -4,7 +4,7 @@ go 1.25.10
 
 require (
 	github.com/bufbuild/buf v1.70.0
-	github.com/crossplane/crossplane-runtime/v2 v2.3.2
+	github.com/crossplane/crossplane-runtime/v2 v2.3.3
 	github.com/crossplane/crossplane/apis/v2 v2.3.1
 	github.com/go-json-experiment/json v0.0.0-20240815175050-ebd3a8989ca1
 	github.com/go-logr/logr v1.4.3
