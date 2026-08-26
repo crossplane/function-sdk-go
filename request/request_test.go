@@ -419,7 +419,7 @@ func TestGetExtraResources(t *testing.T) {
 		"ExtraResources": {
 			reason: "If the request has extra resources in the deprecated field we should return them.",
 			req: &v1.RunFunctionRequest{
-				ExtraResources: map[string]*v1.Resources{
+				ExtraResources: map[string]*v1.Resources{ //nolint:staticcheck  // preserve backwards compatibility
 					"test-resources": {
 						Items: []*v1.Resource{
 							{
