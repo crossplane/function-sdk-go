@@ -29,6 +29,7 @@ import (
 //
 //	type CLI struct {
 //	    function.CLI `kong:"embed"`
+//	    // MyFlag string `default:"foo" env:"MY_FLAG" help:"My custom flag."`
 //	}
 //
 //	func (c *CLI) Run() error {
@@ -37,25 +38,8 @@ import (
 //	        return err
 //	    }
 //	    return function.Serve(&Function{log: log}, c.StandardOptions()...)
-//	}
-//
-//	func main() {
-//	    function.Parse(&CLI{}, "My function.")
-//	}
-//
-// To add custom flags, add fields to your struct:
-//
-//	type CLI struct {
-//	    function.CLI `kong:"embed"`
-//	    MyFlag string `default:"foo" env:"MY_FLAG" help:"My custom flag."`
-//	}
-//
-//	func (c *CLI) Run() error {
-//	    log, err := c.Logger()
-//	    if err != nil {
-//	        return err
-//	    }
-//	    return function.Serve(&Function{log: log, myFlag: c.MyFlag}, c.StandardOptions()...)
+//	    // or with custom flags:
+//	    // return function.Serve(&Function{log: log, myFlag: c.MyFlag}, c.StandardOptions()...)
 //	}
 //
 //	func main() {
