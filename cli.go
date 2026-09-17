@@ -16,14 +16,50 @@ limitations under the License.
 
 package function
 
-import "github.com/crossplane/function-sdk-go/logging"
+import (
+	"github.com/alecthomas/kong"
+
+	"github.com/crossplane/function-sdk-go/logging"
+)
 
 // CLI provides standard flags and environment variables for Composition
-// Functions. Embed it in your own struct to add custom flags.
+// Functions. It is designed to be used with [github.com/alecthomas/kong].
+//
+// Without custom flags, use CLI directly with [Parse]:
+//
+//	type CLI struct {
+//	    function.CLI `kong:"embed"`
+//	}
+//
+//	func (c *CLI) Run() error {
+//	    log, err := c.Logger()
+//	    if err != nil {
+//	        return err
+//	    }
+//	    return function.Serve(&Function{log: log}, c.StandardOptions()...)
+//	}
+//
+//	func main() {
+//	    function.Parse(&CLI{}, "My function.")
+//	}
+//
+// To add custom flags, add fields to your struct:
 //
 //	type CLI struct {
 //	    function.CLI `kong:"embed"`
 //	    MyFlag string `default:"foo" env:"MY_FLAG" help:"My custom flag."`
+//	}
+//
+//	func (c *CLI) Run() error {
+//	    log, err := c.Logger()
+//	    if err != nil {
+//	        return err
+//	    }
+//	    return function.Serve(&Function{log: log, myFlag: c.MyFlag}, c.StandardOptions()...)
+//	}
+//
+//	func main() {
+//	    function.Parse(&CLI{}, "My function.")
 //	}
 type CLI struct {
 	Address            string `default:":9443"            env:"ADDRESS"                                                                                                       help:"Address at which to listen for gRPC connections."`
@@ -47,4 +83,15 @@ func (c *CLI) StandardOptions() []ServeOption {
 // Logger returns a new logger configured from CLI flags.
 func (c *CLI) Logger() (logging.Logger, error) {
 	return NewLogger(c.Debug)
+}
+
+// Parse parses CLI flags using kong and runs the command. The cli argument must
+// have a Run() error method. An optional description is used as CLI help text.
+func Parse(cli any, description ...string) {
+	options := []kong.Option{}
+	if len(description) > 0 {
+		options = append(options, kong.Description(description[0]))
+	}
+	ctx := kong.Parse(cli, options...)
+	ctx.FatalIfErrorf(ctx.Run())
 }
