@@ -15,7 +15,7 @@ env:
 
 jobs:
   check-diff:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
@@ -35,7 +35,7 @@ jobs:
         run: make check-diff
 
   detect-noop:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       noop: ${{ steps.noop.outputs.should_skip }}
     steps:
@@ -49,7 +49,7 @@ jobs:
           concurrent_skipping: false
 
   lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -76,7 +76,7 @@ jobs:
           version: ${{ env.GOLANGCI_VERSION }}
 
   codeql:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -103,7 +103,7 @@ jobs:
         uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4
 
   unit-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
