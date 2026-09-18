@@ -21,7 +21,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"k8s.io/utils/ptr"
 
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/response"
@@ -136,7 +135,7 @@ func TestCondition(t *testing.T) {
 						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
 						Target:  v1.Target_TARGET_COMPOSITE.Enum(),
-						Message: ptr.To("a test message"),
+						Message: new("a test message"),
 					},
 				},
 			},
@@ -164,14 +163,14 @@ func TestCondition(t *testing.T) {
 						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
 						Target:  v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
-						Message: ptr.To("a test message"),
+						Message: new("a test message"),
 					},
 					{
 						Type:    typeDatabaseReady,
 						Status:  v1.Status_STATUS_CONDITION_TRUE,
 						Reason:  reasonAvailable,
 						Target:  v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
-						Message: ptr.To("a test message"),
+						Message: new("a test message"),
 					},
 				},
 			},

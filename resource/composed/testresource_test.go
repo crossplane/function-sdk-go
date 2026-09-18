@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 )
 
 // TestResource is a generic test resource that mimics a Crossplane managed resource
@@ -86,10 +85,10 @@ func (trs *TestResourceSpec) DeepCopyInto(out *TestResourceSpec) {
 func (trp *TestResourceParameters) DeepCopyInto(out *TestResourceParameters) {
 	*out = *trp
 	if trp.Region != nil {
-		out.Region = ptr.To(*trp.Region)
+		out.Region = new(*trp.Region)
 	}
 	if trp.Name != nil {
-		out.Name = ptr.To(*trp.Name)
+		out.Name = new(*trp.Name)
 	}
 }
 
