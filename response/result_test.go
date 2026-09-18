@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"k8s.io/utils/ptr"
 
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/response"
@@ -129,13 +128,13 @@ func TestResult(t *testing.T) {
 						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal result targeting the composite",
 						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
-						Reason:   ptr.To("TestReason"),
+						Reason:   new("TestReason"),
 					},
 					{
 						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result targeting the composite",
 						Target:   v1.Target_TARGET_COMPOSITE.Enum(),
-						Reason:   ptr.To("TestReason"),
+						Reason:   new("TestReason"),
 					},
 				},
 			},
@@ -162,13 +161,13 @@ func TestResult(t *testing.T) {
 						Severity: v1.Severity_SEVERITY_NORMAL,
 						Message:  "this is a test normal result targeting the composite and claim",
 						Target:   v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
-						Reason:   ptr.To("TestReason"),
+						Reason:   new("TestReason"),
 					},
 					{
 						Severity: v1.Severity_SEVERITY_WARNING,
 						Message:  "this is a test warning result targeting the composite and claim",
 						Target:   v1.Target_TARGET_COMPOSITE_AND_CLAIM.Enum(),
-						Reason:   ptr.To("TestReason"),
+						Reason:   new("TestReason"),
 					},
 				},
 			},
