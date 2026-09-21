@@ -10,12 +10,12 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.26.6'
+  GO_VERSION: '1.26.7'
   GOLANGCI_VERSION: 'v2.13.2'
 
 jobs:
   check-diff:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
@@ -35,7 +35,7 @@ jobs:
         run: make check-diff
 
   detect-noop:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       noop: ${{ steps.noop.outputs.should_skip }}
     steps:
@@ -49,7 +49,7 @@ jobs:
           concurrent_skipping: false
 
   lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -76,7 +76,7 @@ jobs:
           version: ${{ env.GOLANGCI_VERSION }}
 
   codeql:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -95,15 +95,15 @@ jobs:
         run: make modules.download modules.check
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4
         with:
           languages: go
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4
 
   unit-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: detect-noop
     if: needs.detect-noop.outputs.noop != 'true'
 
@@ -128,7 +128,7 @@ jobs:
         run: make -j2 test
 
       - name: Publish Unit Test Coverage
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           flags: unittests
           file: _output/tests/linux_amd64/coverage.txt

@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 )
 
@@ -86,7 +85,7 @@ func ExampleFrom() {
 		},
 		Spec: TestResourceSpec{
 			ForProvider: TestResourceParameters{
-				Region: ptr.To[string]("us-east-2"),
+				Region: new("us-east-2"),
 			},
 		},
 	}
@@ -145,7 +144,7 @@ func TestFrom(t *testing.T) {
 					},
 					Spec: TestResourceSpec{
 						ForProvider: TestResourceParameters{
-							Region: ptr.To[string]("us-east-2"),
+							Region: new("us-east-2"),
 						},
 					},
 				},
@@ -178,7 +177,7 @@ func TestFrom(t *testing.T) {
 					},
 					Spec: TestResourceSpec{
 						ForProvider: TestResourceParameters{
-							Region: ptr.To[string]("us-east-2"),
+							Region: new("us-east-2"),
 						},
 					},
 				},
