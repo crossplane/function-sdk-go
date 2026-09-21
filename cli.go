@@ -46,12 +46,12 @@ import (
 //	    function.Parse(&CLI{}, "My function.")
 //	}
 type CLI struct {
-	Address            string `default:":9443"            env:"ADDRESS"                                                                                                       help:"Address at which to listen for gRPC connections."`
-	Debug              bool   `env:"DEBUG"                help:"Emit debug logs in addition to info logs."                                                                    short:"d"`
-	Insecure           bool   `env:"INSECURE"             help:"Run without mTLS credentials. If you supply this flag --tls-server-certs-dir will be ignored."`
-	MaxRecvMessageSize int    `default:"4"                env:"MAX_RECV_MESSAGE_SIZE"                                                                                         help:"Maximum size of received messages in MB."`
-	Network            string `default:"tcp"              env:"NETWORK"                                                                                                       help:"Network on which to listen for gRPC connections."`
-	TLSCertsDir        string `env:"TLS_SERVER_CERTS_DIR" help:"Directory containing server certs (tls.key, tls.crt) and the CA used to verify client certificates (ca.crt)."`
+	Address            string `default:":9443"                env:"ADDRESS"                                                                                        help:"Address at which to listen for gRPC connections."`
+	Debug              bool   `env:"DEBUG"                    help:"Emit debug logs in addition to info logs."                                                     short:"d"`
+	Insecure           bool   `env:"INSECURE"                 help:"Run without mTLS credentials. If you supply this flag --tls-server-certs-dir will be ignored."`
+	MaxRecvMessageSize int    `default:"4"                    env:"MAX_RECV_MESSAGE_SIZE"                                                                          help:"Maximum size of received messages in MB."`
+	Network            string `default:"tcp"                  env:"NETWORK"                                                                                        help:"Network on which to listen for gRPC connections."`
+	TLSCertsDir        string `aliases:"tls-server-certs-dir" env:"TLS_SERVER_CERTS_DIR"                                                                           help:"Directory containing server certs (tls.key, tls.crt) and the CA used to verify client certificates (ca.crt)." name:"tls-certs-dir"`
 }
 
 // StandardOptions returns the ServeOptions derived from standard CLI flags.
