@@ -17,9 +17,12 @@ limitations under the License.
 package function
 
 import (
+	"time"
+
 	"github.com/alecthomas/kong"
 
 	"github.com/crossplane/function-sdk-go/logging"
+	"github.com/crossplane/function-sdk-go/response"
 )
 
 // CLI provides standard flags and environment variables for Composition
@@ -37,22 +40,24 @@ import (
 //	    if err != nil {
 //	        return err
 //	    }
-//	    return function.Serve(&Function{log: log}, c.StandardOptions()...)
+//	    // Use c.TTL with response.To(req, c.TTL) in RunFunction.
+//	    return function.Serve(&Function{log: log, ttl: c.TTL}, c.StandardOptions()...)
 //	    // or with custom flags:
-//	    // return function.Serve(&Function{log: log, myFlag: c.MyFlag}, c.StandardOptions()...)
+//	    // return function.Serve(&Function{log: log, ttl: c.TTL, myFlag: c.MyFlag}, c.StandardOptions()...)
 //	}
 //
 //	func main() {
 //	    function.Parse(&CLI{}, "My function.")
 //	}
 type CLI struct {
-	Address            string `default:":9443"                 env:"ADDRESS"                                                                                        help:"Address at which to listen for gRPC connections."`
-	Debug              bool   `env:"DEBUG"                     help:"Emit debug logs in addition to info logs."                                                     short:"d"`
-	Insecure           bool   `env:"INSECURE"                  help:"Run without mTLS credentials. If you supply this flag --tls-server-certs-dir will be ignored."`
-	MaxRecvMessageSize int    `aliases:"max-grpc-message-size" default:"4"                                                                                          env:"MAX_RECV_MESSAGE_SIZE,MAX_GRPC_MESSAGE_SIZE"                                                                   help:"Maximum size of received messages in MB."`
-	MaxSendMessageSize int    `env:"MAX_SEND_MESSAGE_SIZE"     help:"Maximum size of sent messages in MB. Defaults to max-recv-message-size when unset."`
-	Network            string `default:"tcp"                   env:"NETWORK"                                                                                        help:"Network on which to listen for gRPC connections."`
-	TLSCertsDir        string `aliases:"tls-server-certs-dir"  env:"TLS_SERVER_CERTS_DIR"                                                                           help:"Directory containing server certs (tls.key, tls.crt) and the CA used to verify client certificates (ca.crt)." name:"tls-certs-dir"`
+	Address            string        `default:":9443"                 env:"ADDRESS"                                                                                        help:"Address at which to listen for gRPC connections."`
+	Debug              bool          `env:"DEBUG"                     help:"Emit debug logs in addition to info logs."                                                     short:"d"`
+	Insecure           bool          `env:"INSECURE"                  help:"Run without mTLS credentials. If you supply this flag --tls-server-certs-dir will be ignored."`
+	MaxRecvMessageSize int           `aliases:"max-grpc-message-size" default:"4"                                                                                          env:"MAX_RECV_MESSAGE_SIZE,MAX_GRPC_MESSAGE_SIZE"                                                                   help:"Maximum size of received messages in MB."`
+	MaxSendMessageSize int           `env:"MAX_SEND_MESSAGE_SIZE"     help:"Maximum size of sent messages in MB. Defaults to max-recv-message-size when unset."`
+	Network            string        `default:"tcp"                   env:"NETWORK"                                                                                        help:"Network on which to listen for gRPC connections."`
+	TTL                time.Duration `default:"${default_ttl}"        env:"TTL"                                                                                            help:"TTL for which a response can be cached. Pass it to response.To. Set to 0 to disable caching."`
+	TLSCertsDir        string        `aliases:"tls-server-certs-dir"  env:"TLS_SERVER_CERTS_DIR"                                                                           help:"Directory containing server certs (tls.key, tls.crt) and the CA used to verify client certificates (ca.crt)." name:"tls-certs-dir"`
 }
 
 // StandardOptions returns the ServeOptions derived from standard CLI flags.
@@ -61,13 +66,16 @@ func (c *CLI) StandardOptions() []ServeOption {
 	if sendSize == 0 {
 		sendSize = c.MaxRecvMessageSize
 	}
-	return []ServeOption{
+	opts := []ServeOption{
 		Listen(c.Network, c.Address),
-		MTLSCertificates(c.TLSCertsDir),
 		Insecure(c.Insecure),
 		MaxRecvMessageSize(c.MaxRecvMessageSize * 1024 * 1024),
 		MaxSendMessageSize(sendSize * 1024 * 1024),
 	}
+	if !c.Insecure {
+		opts = append(opts, MTLSCertificates(c.TLSCertsDir))
+	}
+	return opts
 }
 
 // Logger returns a new logger configured from CLI flags.
@@ -75,10 +83,15 @@ func (c *CLI) Logger() (logging.Logger, error) {
 	return NewLogger(c.Debug)
 }
 
+// kongVars returns the variables interpolated into CLI struct tags.
+func kongVars() kong.Vars {
+	return kong.Vars{"default_ttl": response.DefaultTTL.String()}
+}
+
 // Parse parses CLI flags using kong and runs the command. The cli argument must
 // have a Run() error method. An optional description is used as CLI help text.
 func Parse(cli any, description ...string) {
-	options := []kong.Option{}
+	options := []kong.Option{kongVars()}
 	if len(description) > 0 {
 		options = append(options, kong.Description(description[0]))
 	}
