@@ -19,15 +19,56 @@ package response
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	v1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/resource"
 )
+
+func TestToClonesRequestState(t *testing.T) {
+	req := &v1.RunFunctionRequest{
+		Meta: &v1.RequestMeta{Tag: "original"},
+		Desired: &v1.State{
+			Resources: map[string]*v1.Resource{
+				"existing": {
+					Resource: resource.MustStructJSON(`{
+						"apiVersion": "example.org/v1",
+						"kind": "Widget"
+					}`),
+				},
+			},
+		},
+		Context: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"existing": structpb.NewStringValue("value"),
+			},
+		},
+	}
+
+	rsp := To(req, time.Minute)
+
+	SetContextKey(rsp, "new", structpb.NewStringValue("response-only"))
+	rsp.Desired.Resources["response-only"] = &v1.Resource{
+		Resource: resource.MustStructJSON(`{
+			"apiVersion": "example.org/v1",
+			"kind": "ExtraWidget"
+		}`),
+	}
+
+	if got, ok := req.GetContext().GetFields()["new"]; ok {
+		t.Fatalf("To(...) aliased request context: unexpected field %q", got.GetStringValue())
+	}
+
+	if _, ok := req.GetDesired().GetResources()["response-only"]; ok {
+		t.Fatal("To(...) aliased desired resources from the request")
+	}
+}
 
 func TestSetDesiredResources(t *testing.T) {
 	type args struct {
