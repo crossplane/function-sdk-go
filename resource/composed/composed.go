@@ -256,6 +256,26 @@ func getNumber(p *fieldpath.Paved, path string) (float64, error) {
 }
 
 // SetValue at the supplied field path.
+//
+// The path uses dot notation to traverse nested fields (e.g., "spec.forProvider.region").
+// Dots in the path are treated as separators, so a path like
+// "metadata.labels.prometheus.io.metrics" creates nested maps:
+//
+//	metadata:
+//	  labels:
+//	    prometheus:
+//	      io:
+//	        metrics: <value>
+//
+// To set label or annotation keys that contain dots (e.g., "prometheus.io/port"),
+// use the embedded Unstructured methods instead:
+//
+//	cd.SetLabels(map[string]string{"prometheus.io/port": "9090"})
+//	cd.SetAnnotations(map[string]string{"prometheus.io/scrape": "true"})
+//
+// These methods preserve the full key name without interpreting dots as separators.
+// Note that SetLabels and SetAnnotations replace the entire labels/annotations map;
+// use GetLabels/GetAnnotations first if you need to merge with existing values.
 func (cd *Unstructured) SetValue(path string, value any) error {
 	return fieldpath.Pave(cd.Object).SetValue(path, value)
 }
