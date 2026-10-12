@@ -16,6 +16,35 @@ To learn how to use this SDK:
 If you just want to jump in and get started, consider using the
 [function-template-go] template repository.
 
+## Standard CLI options
+
+Embed `function.CLI` to get the standard flags and environment variables
+(`--address`, `--debug`, `--insecure`, `--tls-certs-dir`, `--ttl`, and more).
+Add your own flags alongside it:
+
+```go
+type CLI struct {
+	function.CLI `kong:"embed"`
+
+	MyFlag string `default:"foo" env:"MY_FLAG" help:"My custom flag."`
+}
+
+func (c *CLI) Run() error {
+	log, err := c.Logger()
+	if err != nil {
+		return err
+	}
+	// Use c.TTL with response.To(req, c.TTL) in RunFunction.
+	return function.Serve(&Function{log: log, ttl: c.TTL, myFlag: c.MyFlag}, c.StandardOptions()...)
+}
+
+func main() {
+	function.Parse(&CLI{}, "My function.")
+}
+```
+
+See the [package docs] for the full list of options.
+
 [go]: https://go.dev
 [functions]: https://docs.crossplane.io/latest/concepts/composition-functions
 [contributing guidelines]: https://github.com/crossplane/crossplane/tree/master/contributing
