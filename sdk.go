@@ -48,6 +48,7 @@ const (
 	DefaultNetwork        = "tcp"
 	DefaultAddress        = ":9443"
 	DefaultMaxRecvMsgSize = 1024 * 1024 * 4
+	DefaultMaxSendMsgSize = 1024 * 1024 * 4
 	DefaultMetricsAddress = ":8080"
 )
 
@@ -56,6 +57,7 @@ type ServeOptions struct {
 	Network        string
 	Address        string
 	MaxRecvMsgSize int
+	MaxSendMsgSize int
 	Credentials    credentials.TransportCredentials
 	HealthServer   healthgrpc.HealthServer
 
@@ -142,6 +144,15 @@ func MaxRecvMessageSize(sz int) ServeOption {
 	}
 }
 
+// MaxSendMessageSize returns a ServeOption to set the max message size in bytes the server can send.
+// If this is not set, gRPC uses the default limit.
+func MaxSendMessageSize(sz int) ServeOption {
+	return func(o *ServeOptions) error {
+		o.MaxSendMsgSize = sz
+		return nil
+	}
+}
+
 // WithHealthServer lets the server start with a health server that can be called
 // to verify that the server is ready to accept connections.
 //
@@ -191,6 +202,7 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 		Network:         DefaultNetwork,
 		Address:         DefaultAddress,
 		MaxRecvMsgSize:  DefaultMaxRecvMsgSize,
+		MaxSendMsgSize:  DefaultMaxSendMsgSize,
 		MetricsAddress:  DefaultMetricsAddress,
 		MetricsRegistry: prometheus.DefaultRegisterer.(*prometheus.Registry), // Use default registry
 	}
@@ -214,6 +226,7 @@ func Serve(fn v1.FunctionRunnerServiceServer, o ...ServeOption) error {
 	// Create server options
 	serverOpts := []grpc.ServerOption{
 		grpc.MaxRecvMsgSize(so.MaxRecvMsgSize),
+		grpc.MaxSendMsgSize(so.MaxSendMsgSize),
 		grpc.Creds(so.Credentials),
 	}
 
