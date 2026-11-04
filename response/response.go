@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,16 +36,96 @@ import (
 const DefaultTTL = 1 * time.Minute
 
 // To bootstraps a response to the supplied request. It automatically copies the
-// desired state from the request.
+// desired state, context and dependencies from the request.
+//
+// Copying dependencies means a function that adds one keeps the ones earlier
+// functions declared. They're copied only when the request has them: unset
+// dependencies mean "no opinion", which Crossplane reads as "carry mine
+// forward", while an empty set means "drop every constraint".
 func To(req *v1.RunFunctionRequest, ttl time.Duration) *v1.RunFunctionResponse {
 	return &v1.RunFunctionResponse{
 		Meta: &v1.ResponseMeta{
 			Tag: req.GetMeta().GetTag(),
 			Ttl: durationpb.New(ttl),
 		},
-		Desired: req.GetDesired(),
-		Context: req.GetContext(),
+		Desired:      req.GetDesired(),
+		Context:      req.GetContext(),
+		Dependencies: dependenciesOf(req),
 	}
+}
+
+// dependenciesOf copies the request's dependencies, so adding one to the
+// response doesn't also add it to the request.
+func dependenciesOf(req *v1.RunFunctionRequest) *v1.Dependencies {
+	if req.GetDependencies() == nil {
+		return nil
+	}
+	d, _ := proto.Clone(req.GetDependencies()).(*v1.Dependencies)
+	return d
+}
+
+// A DependencyOption configures a dependency added by AddDependency.
+type DependencyOption func(d *v1.Dependency)
+
+// WithCreateBeforeDestroy lets a resource be created without waiting for what
+// it depends on to be deleted. Use it for a replacement that must exist before
+// its predecessor is torn down.
+func WithCreateBeforeDestroy() DependencyOption {
+	return func(d *v1.Dependency) {
+		d.Lifecycle = v1.DependencyLifecycle_DEPENDENCY_LIFECYCLE_CREATE_BEFORE_DESTROY
+	}
+}
+
+// AddDependency declares that one composed resource depends on another.
+//
+// By default ordering is symmetric: the resource is created only once what it
+// depends on is ready, and what it depends on is deleted only once the
+// resource is gone. Dependencies express ordering only; they don't move any
+// data between resources.
+//
+// A function must return the full set of dependencies it wants. To copies
+// forward the ones the request carried, so add to a response it created.
+//
+// Only a Crossplane that advertises CAPABILITY_DEPENDENCIES honors
+// dependencies. Use request.HasCapability to check before relying on them.
+func AddDependency(rsp *v1.RunFunctionResponse, r, dependsOn resource.Name, o ...DependencyOption) {
+	d := &v1.Dependency{
+		Resource:  string(r),
+		DependsOn: &v1.Dependency_ComposedResource{ComposedResource: string(dependsOn)},
+	}
+	for _, fn := range o {
+		fn(d)
+	}
+	addDependency(rsp, d)
+}
+
+// AddRequiredResourceDependency declares that a composed resource depends on
+// a resource the function requires but doesn't compose. Set the dependency's
+// name, and namespace for a namespaced resource, to depend on one of the
+// resources the requirement matched; leave them unset to wait for all of them.
+//
+// Crossplane never deletes a resource it didn't compose, so this orders only
+// creation and updates.
+func AddRequiredResourceDependency(rsp *v1.RunFunctionResponse, r resource.Name, dependsOn *v1.RequiredResourceDependency) {
+	addDependency(rsp, &v1.Dependency{
+		Resource:  string(r),
+		DependsOn: &v1.Dependency_RequiredResource{RequiredResource: dependsOn},
+	})
+}
+
+// ClearDependencies declares that no composed resources should be ordered. It
+// drops the dependencies earlier functions declared, which To copied forward.
+// That's different from leaving dependencies unset, which carries them
+// forward.
+func ClearDependencies(rsp *v1.RunFunctionResponse) {
+	rsp.Dependencies = &v1.Dependencies{}
+}
+
+func addDependency(rsp *v1.RunFunctionResponse, d *v1.Dependency) {
+	if rsp.GetDependencies() == nil {
+		rsp.Dependencies = &v1.Dependencies{}
+	}
+	rsp.Dependencies.Items = append(rsp.Dependencies.Items, d)
 }
 
 // SetContextKey sets context to the supplied key.

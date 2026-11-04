@@ -236,3 +236,134 @@ func MustUnstructJSON(j string) *unstructured.Unstructured {
 	}
 	return u
 }
+
+func TestToDependencies(t *testing.T) {
+	edge := &v1.Dependency{Resource: "subnet", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "vpc"}}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		want   *v1.Dependencies
+	}{
+		"Unset": {
+			reason: "Unset dependencies mean no opinion, so they must stay unset rather than become an empty set.",
+			req:    &v1.RunFunctionRequest{},
+			want:   nil,
+		},
+		"Empty": {
+			reason: "An empty set means drop every constraint, and must be carried as such.",
+			req:    &v1.RunFunctionRequest{Dependencies: &v1.Dependencies{}},
+			want:   &v1.Dependencies{},
+		},
+		"Carried": {
+			reason: "A function should keep the dependencies earlier functions declared.",
+			req:    &v1.RunFunctionRequest{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{edge}}},
+			want:   &v1.Dependencies{Items: []*v1.Dependency{edge}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := To(tc.req, DefaultTTL).GetDependencies()
+			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
+				t.Errorf("%s\nTo(...).Dependencies: -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestToDoesNotShareDependencies(t *testing.T) {
+	req := &v1.RunFunctionRequest{Dependencies: &v1.Dependencies{}}
+	rsp := To(req, DefaultTTL)
+	AddDependency(rsp, "subnet", "vpc")
+
+	if n := len(req.GetDependencies().GetItems()); n != 0 {
+		t.Errorf("adding a dependency to the response added %d to the request", n)
+	}
+}
+
+func TestAddDependency(t *testing.T) {
+	type args struct {
+		rsp       *v1.RunFunctionResponse
+		r         resource.Name
+		dependsOn resource.Name
+		o         []DependencyOption
+	}
+	cases := map[string]struct {
+		reason string
+		args   args
+		want   *v1.RunFunctionResponse
+	}{
+		"FirstDependency": {
+			reason: "Adding to a response with no dependencies should create the set.",
+			args:   args{rsp: &v1.RunFunctionResponse{}, r: "subnet", dependsOn: "vpc"},
+			want: &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+				{Resource: "subnet", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "vpc"}},
+			}}},
+		},
+		"Appends": {
+			reason: "Adding should keep the dependencies already there.",
+			args: args{
+				rsp: &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+					{Resource: "subnet", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "vpc"}},
+				}}},
+				r:         "instance",
+				dependsOn: "subnet",
+			},
+			want: &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+				{Resource: "subnet", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "vpc"}},
+				{Resource: "instance", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "subnet"}},
+			}}},
+		},
+		"CreateBeforeDestroy": {
+			reason: "WithCreateBeforeDestroy should set the lifecycle.",
+			args: args{
+				rsp: &v1.RunFunctionResponse{}, r: "new-db", dependsOn: "old-db",
+				o: []DependencyOption{WithCreateBeforeDestroy()},
+			},
+			want: &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+				{
+					Resource:  "new-db",
+					DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "old-db"},
+					Lifecycle: v1.DependencyLifecycle_DEPENDENCY_LIFECYCLE_CREATE_BEFORE_DESTROY,
+				},
+			}}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			AddDependency(tc.args.rsp, tc.args.r, tc.args.dependsOn, tc.args.o...)
+			if diff := cmp.Diff(tc.want, tc.args.rsp, protocmp.Transform()); diff != "" {
+				t.Errorf("%s\nAddDependency(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestAddRequiredResourceDependency(t *testing.T) {
+	rsp := &v1.RunFunctionResponse{}
+	AddRequiredResourceDependency(rsp, "app-config", &v1.RequiredResourceDependency{RequirementName: "dbs"})
+
+	want := &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+		{
+			Resource:  "app-config",
+			DependsOn: &v1.Dependency_RequiredResource{RequiredResource: &v1.RequiredResourceDependency{RequirementName: "dbs"}},
+		},
+	}}}
+	if diff := cmp.Diff(want, rsp, protocmp.Transform()); diff != "" {
+		t.Errorf("AddRequiredResourceDependency(...): -want, +got:\n%s", diff)
+	}
+}
+
+func TestClearDependencies(t *testing.T) {
+	rsp := &v1.RunFunctionResponse{Dependencies: &v1.Dependencies{Items: []*v1.Dependency{
+		{Resource: "subnet", DependsOn: &v1.Dependency_ComposedResource{ComposedResource: "vpc"}},
+	}}}
+	ClearDependencies(rsp)
+
+	// Empty, not unset: unset would carry the dropped dependencies forward.
+	if rsp.GetDependencies() == nil || len(rsp.GetDependencies().GetItems()) != 0 {
+		t.Errorf("ClearDependencies(...): want an empty set, got %v", rsp.GetDependencies())
+	}
+}
