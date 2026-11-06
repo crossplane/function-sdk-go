@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -37,13 +38,23 @@ const DefaultTTL = 1 * time.Minute
 // To bootstraps a response to the supplied request. It automatically copies the
 // desired state from the request.
 func To(req *v1.RunFunctionRequest, ttl time.Duration) *v1.RunFunctionResponse {
+	var desired *v1.State
+	if d := req.GetDesired(); d != nil {
+		desired = proto.Clone(d).(*v1.State)
+	}
+
+	var ctx *structpb.Struct
+	if c := req.GetContext(); c != nil {
+		ctx = proto.Clone(c).(*structpb.Struct)
+	}
+
 	return &v1.RunFunctionResponse{
 		Meta: &v1.ResponseMeta{
 			Tag: req.GetMeta().GetTag(),
 			Ttl: durationpb.New(ttl),
 		},
-		Desired: req.GetDesired(),
-		Context: req.GetContext(),
+		Desired: desired,
+		Context: ctx,
 	}
 }
 
