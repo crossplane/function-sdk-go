@@ -20,6 +20,8 @@ limitations under the License.
 package resource
 
 import (
+	"math"
+
 	"github.com/go-json-experiment/json"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -108,7 +110,7 @@ func AsObject(s *structpb.Struct, o runtime.Object) error {
 	// We try to avoid a JSON round-trip if o is backed by unstructured data.
 	// Any type that is or embeds *unstructured.Unstructured has this method.
 	if u, ok := o.(interface{ SetUnstructuredContent(_ map[string]any) }); ok {
-		u.SetUnstructuredContent(s.AsMap())
+		u.SetUnstructuredContent(asUnstructuredContent(s.AsMap()))
 		return nil
 	}
 
@@ -117,6 +119,36 @@ func AsObject(s *structpb.Struct, o runtime.Object) error {
 		return errors.Wrapf(err, "cannot marshal %T to JSON", s)
 	}
 	return errors.Wrapf(json.Unmarshal(b, o, json.RejectUnknownMembers(true)), "cannot unmarshal JSON from %T into %T", s, o)
+}
+
+// asUnstructuredContent converts the whole numbers in the supplied map from
+// float64, the only number type a Struct knows, to int64. That is what
+// apimachinery produces when it decodes JSON into unstructured content, and
+// what its accessors such as GetGeneration expect.
+func asUnstructuredContent(m map[string]any) map[string]any {
+	for k, v := range m {
+		m[k] = asUnstructuredValue(v)
+	}
+	return m
+}
+
+func asUnstructuredValue(v any) any {
+	switch v := v.(type) {
+	case map[string]any:
+		return asUnstructuredContent(v)
+	case []any:
+		for i := range v {
+			v[i] = asUnstructuredValue(v[i])
+		}
+		return v
+	case float64:
+		if v == math.Trunc(v) && v >= math.MinInt64 && v <= math.MaxInt64 {
+			return int64(v)
+		}
+		return v
+	default:
+		return v
+	}
 }
 
 // AsStruct gets the supplied struct from the supplied Kubernetes object.
