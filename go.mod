@@ -3,6 +3,7 @@ module github.com/crossplane/function-sdk-go
 go 1.26.7
 
 require (
+	github.com/alecthomas/kong v1.16.1
 	github.com/bufbuild/buf v1.74.0
 	github.com/crossplane/crossplane-runtime/v2 v2.5.0
 	github.com/crossplane/crossplane/apis/v2 v2.5.0-rc.0.0.20261029180807-76a72bee8a19
