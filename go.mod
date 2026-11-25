@@ -5,7 +5,7 @@ go 1.26.7
 require (
 	github.com/bufbuild/buf v1.75.0
 	github.com/crossplane/crossplane-runtime/v2 v2.5.0
-	github.com/crossplane/crossplane/apis/v2 v2.5.0-rc.0.0.20261029180807-76a72bee8a19
+	github.com/crossplane/crossplane/apis/v2 v2.5.0
 	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3
 	github.com/go-logr/logr v1.4.4
 	github.com/go-logr/zapr v1.3.0
@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.25.0
 	go.uber.org/zap v1.28.0
-	google.golang.org/grpc v1.84.0
+	google.golang.org/grpc v1.85.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.2
 	google.golang.org/protobuf v1.36.13-0.20261016172727-e9ee2a76ab8e
 	k8s.io/api v0.37.2
