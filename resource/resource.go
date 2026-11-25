@@ -142,7 +142,7 @@ func asUnstructuredValue(v any) any {
 		}
 		return v
 	case float64:
-		if v == math.Trunc(v) && v >= math.MinInt64 && v <= math.MaxInt64 {
+		if v == math.Trunc(v) && v >= math.MinInt64 && v < math.MaxInt64 {
 			return int64(v)
 		}
 		return v

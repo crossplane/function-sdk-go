@@ -54,6 +54,41 @@ func TestAsObjectUnstructuredNumbers(t *testing.T) {
 				},
 			},
 		},
+		"NestedAndInt64Fields": {
+			reason: "Whole numbers in a list of maps and in int64 metadata fields must be stored as int64.",
+			s: map[string]any{
+				"apiVersion": "example.org/v1",
+				"kind":       "Example",
+				"metadata":   map[string]any{"name": "a", "generation": 2, "deletionGracePeriodSeconds": 30},
+				"spec":       map[string]any{"ports": []any{map[string]any{"port": 443}}, "big": float64(1 << 62)},
+			},
+			want: want{
+				generation: 2,
+				object: map[string]any{
+					"apiVersion": "example.org/v1",
+					"kind":       "Example",
+					"metadata":   map[string]any{"name": "a", "generation": int64(2), "deletionGracePeriodSeconds": int64(30)},
+					"spec":       map[string]any{"ports": []any{map[string]any{"port": int64(443)}}, "big": int64(1 << 62)},
+				},
+			},
+		},
+		"OutOfRangeStaysFloat64": {
+			reason: "2^63 has no int64 form and must be left alone rather than overflow.",
+			s: map[string]any{
+				"apiVersion": "example.org/v1",
+				"kind":       "Example",
+				"metadata":   map[string]any{"name": "a"},
+				"spec":       map[string]any{"huge": float64(1 << 63)},
+			},
+			want: want{
+				object: map[string]any{
+					"apiVersion": "example.org/v1",
+					"kind":       "Example",
+					"metadata":   map[string]any{"name": "a"},
+					"spec":       map[string]any{"huge": float64(1 << 63)},
+				},
+			},
+		},
 		"FractionsStayFloat64": {
 			reason: "A number with a fractional part has no int64 form and must be left alone.",
 			s: map[string]any{
@@ -90,6 +125,14 @@ func TestAsObjectUnstructuredNumbers(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want.object, o.UnstructuredContent()); diff != "" {
 				t.Errorf("\n%s\nAsObject(...): -want, +got:\n%s", tc.reason, diff)
+			}
+
+			back, err := AsStruct(o)
+			if err != nil {
+				t.Fatalf("AsStruct(...): %v", err)
+			}
+			if diff := cmp.Diff(s.AsMap(), back.AsMap()); diff != "" {
+				t.Errorf("\n%s\nAsStruct(AsObject(...)): -want, +got:\n%s", tc.reason, diff)
 			}
 		})
 	}
