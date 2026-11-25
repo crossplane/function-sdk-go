@@ -751,3 +751,122 @@ func TestHasCapability(t *testing.T) {
 		})
 	}
 }
+
+func TestMissingCapabilities(t *testing.T) {
+	advertises := func(cs ...v1.Capability) *v1.RunFunctionRequest {
+		return &v1.RunFunctionRequest{Meta: &v1.RequestMeta{Capabilities: append([]v1.Capability{v1.Capability_CAPABILITY_CAPABILITIES}, cs...)}}
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		cs     []v1.Capability
+		want   []v1.Capability
+	}{
+		"AllPresent": {
+			reason: "If every capability is advertised nothing is missing.",
+			req:    advertises(v1.Capability_CAPABILITY_REQUIRED_SCHEMAS, v1.Capability_CAPABILITY_DEPENDENCIES),
+			cs:     []v1.Capability{v1.Capability_CAPABILITY_DEPENDENCIES, v1.Capability_CAPABILITY_REQUIRED_SCHEMAS},
+		},
+		"SomeMissing": {
+			reason: "Missing capabilities are returned in the order given, once each.",
+			req:    advertises(v1.Capability_CAPABILITY_REQUIRED_SCHEMAS),
+			cs: []v1.Capability{
+				v1.Capability_CAPABILITY_DEPENDENCIES,
+				v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+				v1.Capability_CAPABILITY_REQUIRED_RESOURCES,
+				v1.Capability_CAPABILITY_DEPENDENCIES,
+			},
+			want: []v1.Capability{v1.Capability_CAPABILITY_DEPENDENCIES, v1.Capability_CAPABILITY_REQUIRED_RESOURCES},
+		},
+		"NotAdvertised": {
+			reason: "A Crossplane that predates capability advertisement lacks every capability.",
+			req:    &v1.RunFunctionRequest{},
+			cs:     []v1.Capability{v1.Capability_CAPABILITY_REQUIRED_SCHEMAS},
+			want:   []v1.Capability{v1.Capability_CAPABILITY_REQUIRED_SCHEMAS},
+		},
+		"NoneRequested": {
+			reason: "Asking for no capabilities means nothing is missing.",
+			req:    &v1.RunFunctionRequest{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := MissingCapabilities(tc.req, tc.cs...)
+
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("\n%s\nMissingCapabilities(...): -want, +got:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}
+
+func TestRequireCapabilities(t *testing.T) {
+	advertises := func(cs ...v1.Capability) *v1.RunFunctionRequest {
+		return &v1.RunFunctionRequest{Meta: &v1.RequestMeta{Capabilities: append([]v1.Capability{v1.Capability_CAPABILITY_CAPABILITIES}, cs...)}}
+	}
+	fatal := func(msg string) *v1.RunFunctionResponse {
+		return &v1.RunFunctionResponse{Results: []*v1.Result{{
+			Severity: v1.Severity_SEVERITY_FATAL,
+			Message:  msg,
+			Target:   v1.Target_TARGET_COMPOSITE.Enum(),
+		}}}
+	}
+
+	type want struct {
+		ok  bool
+		rsp *v1.RunFunctionResponse
+	}
+
+	cases := map[string]struct {
+		reason string
+		req    *v1.RunFunctionRequest
+		cs     []v1.Capability
+		want   want
+	}{
+		"AllPresent": {
+			reason: "If every capability is advertised the function may proceed, and the response is untouched.",
+			req:    advertises(v1.Capability_CAPABILITY_DEPENDENCIES),
+			cs:     []v1.Capability{v1.Capability_CAPABILITY_DEPENDENCIES},
+			want:   want{ok: true, rsp: &v1.RunFunctionResponse{}},
+		},
+		"SomeMissing": {
+			reason: "One fatal result names every missing capability, once each, so they can all be fixed at once.",
+			req:    advertises(v1.Capability_CAPABILITY_REQUIRED_SCHEMAS),
+			cs: []v1.Capability{
+				v1.Capability_CAPABILITY_DEPENDENCIES,
+				v1.Capability_CAPABILITY_REQUIRED_SCHEMAS,
+				v1.Capability_CAPABILITY_REQUIRED_RESOURCES,
+				v1.Capability_CAPABILITY_DEPENDENCIES,
+			},
+			want: want{rsp: fatal("this function requires Crossplane capabilities that Crossplane doesn't advertise: CAPABILITY_DEPENDENCIES, CAPABILITY_REQUIRED_RESOURCES")},
+		},
+		"NotAdvertised": {
+			reason: "A Crossplane that predates capability advertisement is told to upgrade, not to enable a feature.",
+			req:    &v1.RunFunctionRequest{},
+			cs:     []v1.Capability{v1.Capability_CAPABILITY_DEPENDENCIES},
+			want:   want{rsp: fatal("this function requires Crossplane capabilities CAPABILITY_DEPENDENCIES, but Crossplane doesn't advertise its capabilities; it predates v2.2")},
+		},
+		"NoneRequested": {
+			reason: "Requiring no capabilities always succeeds, and leaves the response untouched.",
+			req:    &v1.RunFunctionRequest{},
+			want:   want{ok: true, rsp: &v1.RunFunctionResponse{}},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			rsp := &v1.RunFunctionResponse{}
+			ok := RequireCapabilities(tc.req, rsp, tc.cs...)
+
+			if diff := cmp.Diff(tc.want.ok, ok); diff != "" {
+				t.Errorf("\n%s\nRequireCapabilities(...): -want ok, +got ok:\n%s", tc.reason, diff)
+			}
+
+			if diff := cmp.Diff(tc.want.rsp, rsp, protocmp.Transform()); diff != "" {
+				t.Errorf("\n%s\nRequireCapabilities(...): -want rsp, +got rsp:\n%s", tc.reason, diff)
+			}
+		})
+	}
+}

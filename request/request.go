@@ -19,6 +19,7 @@ package request
 
 import (
 	"slices"
+	"strings"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,6 +30,7 @@ import (
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/resource/composite"
+	"github.com/crossplane/function-sdk-go/response"
 )
 
 // GetInput from the supplied request. Input is loaded into the supplied object.
@@ -189,6 +191,61 @@ func AdvertisesCapabilities(req *v1.RunFunctionRequest) bool {
 // for features the older Crossplane does support.
 func HasCapability(req *v1.RunFunctionRequest, c v1.Capability) bool {
 	return slices.Contains(req.GetMeta().GetCapabilities(), c)
+}
+
+// MissingCapabilities returns the capabilities in cs that Crossplane doesn't
+// advertise in the request metadata, in the order given and without
+// duplicates. It returns nil if Crossplane advertises them all.
+//
+// Like HasCapability, it treats every capability as missing when the calling
+// Crossplane predates capability advertisement.
+func MissingCapabilities(req *v1.RunFunctionRequest, cs ...v1.Capability) []v1.Capability {
+	var missing []v1.Capability
+
+	for _, c := range cs {
+		if HasCapability(req, c) || slices.Contains(missing, c) {
+			continue
+		}
+
+		missing = append(missing, c)
+	}
+
+	return missing
+}
+
+// RequireCapabilities returns true if Crossplane advertises every capability in
+// cs. Otherwise it adds a single fatal result to the supplied response naming
+// every missing capability, and returns false. Use it when a function can't
+// produce a correct result without a capability - for example a composition
+// whose teardown is only safe if Crossplane orders it - and should fail rather
+// than compose something Crossplane will silently get wrong:
+//
+//	if !request.RequireCapabilities(req, rsp, v1.Capability_CAPABILITY_DEPENDENCIES) {
+//		return rsp, nil
+//	}
+//
+// A Crossplane that predates capability advertisement (v2.2) is treated as
+// lacking every capability, and the result says so, so that the fix reads as
+// upgrading Crossplane rather than enabling a feature.
+func RequireCapabilities(req *v1.RunFunctionRequest, rsp *v1.RunFunctionResponse, cs ...v1.Capability) bool {
+	missing := MissingCapabilities(req, cs...)
+	if len(missing) == 0 {
+		return true
+	}
+
+	names := make([]string, len(missing))
+	for i, c := range missing {
+		names[i] = c.String()
+	}
+
+	if !AdvertisesCapabilities(req) {
+		response.Fatal(rsp, errors.Errorf("this function requires Crossplane capabilities %s, but Crossplane doesn't advertise its capabilities; it predates v2.2", strings.Join(names, ", ")))
+		return false
+	}
+
+	response.Fatal(rsp, errors.Errorf("this function requires Crossplane capabilities that Crossplane doesn't advertise: %s", strings.Join(names, ", ")))
+
+	return false
 }
 
 // GetRequiredSchemas from the supplied request. Returns all resolved schemas as
