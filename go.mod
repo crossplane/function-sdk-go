@@ -6,7 +6,7 @@ require (
 	github.com/bufbuild/buf v1.74.0
 	github.com/crossplane/crossplane-runtime/v2 v2.5.0
 	github.com/crossplane/crossplane/apis/v2 v2.5.0
-	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3
+	github.com/go-json-experiment/json v1.27.2
 	github.com/go-logr/logr v1.4.4
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.7.0
